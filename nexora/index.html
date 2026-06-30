@@ -2,462 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#0B1020"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
 <title>Nexora Studio</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-:root{
-  --bg:#0B1020;--card:#111827;--card2:#0d1424;--primary:#00D9FF;--secondary:#4F46E5;
-  --accent:#7C3AED;--text:#fff;--muted:#6b7280;--border:rgba(255,255,255,0.07);
-  --danger:#ef4444;--success:#22c55e;--warn:#eab308;
-}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;}
-canvas#particles{position:fixed;inset:0;z-index:0;pointer-events:none;}
-
-/* ── SCREENS ── */
-.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;transition:opacity .5s,transform .5s;}
-.screen.hidden{opacity:0;pointer-events:none;transform:scale(.97);}
-#dashboard,#roomView{position:fixed;inset:0;display:flex;z-index:10;transition:opacity .4s;}
-#dashboard.hidden,#roomView.hidden{opacity:0;pointer-events:none;}
-
-/* ── SPLASH ── */
-#splash{flex-direction:column;gap:28px;background:var(--bg);}
-.logo-box{background:linear-gradient(145deg,#0d1117,#1a1f2e);display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 40px rgba(0,217,255,.5),0 0 80px rgba(79,70,229,.2);}
-.splash-logo .logo-box{width:100px;height:100px;border-radius:22px;animation:splashIn 1.2s cubic-bezier(.34,1.56,.64,1) both,floatY 3s 1.2s ease-in-out infinite;}
-.splash-title{text-align:center;animation:fadeUp .8s .4s both;}
-.splash-title h1{font-size:38px;font-weight:800;letter-spacing:-1px;
-  background:linear-gradient(90deg,#00D9FF,#fff,#7C3AED);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.splash-title p{color:var(--muted);font-size:14px;margin-top:6px;letter-spacing:1px;}
-.splash-btn-wrap{animation:fadeUp .8s .9s both;}
-.btn-glow{padding:14px 56px;border-radius:14px;font-size:16px;font-weight:700;border:none;cursor:pointer;
-  background:linear-gradient(90deg,#00D9FF,#4F46E5);color:#fff;
-  box-shadow:0 0 32px rgba(0,217,255,.4);transition:all .2s;}
-.btn-glow:hover{transform:scale(1.05);box-shadow:0 0 52px rgba(0,217,255,.7);}
-
-/* ── AUTH ── */
-#auth{background:var(--bg);}
-.auth-card{width:420px;max-width:95vw;background:rgba(17,24,39,.92);border:1px solid var(--border);
-  border-radius:20px;padding:36px;backdrop-filter:blur(16px);
-  box-shadow:0 24px 80px rgba(0,0,0,.6);animation:fadeUp .6s both;}
-.auth-logo{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:24px;}
-.auth-logo .logo-box{width:56px;height:56px;border-radius:13px;}
-.auth-tabs{display:flex;gap:0;background:rgba(255,255,255,.05);border-radius:10px;padding:4px;margin-bottom:20px;}
-.auth-tab{flex:1;padding:8px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;border-radius:8px;transition:all .2s;}
-.auth-tab.active{background:rgba(0,217,255,.15);color:var(--primary);}
-.inp-wrap{position:relative;margin-bottom:12px;}
-.inp-wrap span.ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);}
-.inp-wrap input{width:100%;padding:12px 14px 12px 38px;border-radius:10px;
-  border:1px solid var(--border);background:rgba(255,255,255,.05);color:#fff;font-size:14px;outline:none;transition:border .2s;}
-.inp-wrap input:focus{border-color:rgba(0,217,255,.5);box-shadow:0 0 0 3px rgba(0,217,255,.08);}
-.inp-wrap input::placeholder{color:var(--muted);}
-.btn-primary{width:100%;padding:13px;border-radius:12px;border:none;cursor:pointer;
-  background:linear-gradient(90deg,#00D9FF,#4F46E5);color:#fff;font-size:15px;font-weight:700;
-  box-shadow:0 0 20px rgba(0,217,255,.25);transition:all .2s;margin-bottom:18px;}
-.btn-primary:hover{box-shadow:0 0 32px rgba(0,217,255,.5);transform:translateY(-1px);}
-.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;}
-.divider{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
-.divider span{color:var(--muted);font-size:12px;white-space:nowrap;}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
-.btn-google{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);
-  background:rgba(255,255,255,.05);color:#e5e7eb;font-size:14px;font-weight:600;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;margin-bottom:16px;}
-.btn-google:hover{background:rgba(255,255,255,.1);}
-.auth-footer{text-align:center;color:var(--muted);font-size:13px;}
-.auth-footer a{color:var(--primary);cursor:pointer;font-weight:600;}
-.msg-box{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none;}
-.msg-box.show{display:block;}
-.msg-box.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;}
-.msg-box.success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86efac;}
-.msg-box.info{background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.25);color:#67e8f9;}
-.forgot-link{text-align:right;margin-bottom:14px;}
-.forgot-link a{color:var(--primary);font-size:12px;cursor:pointer;}
-
-/* ── DASHBOARD ── */
-.sidebar{width:232px;min-height:100vh;background:rgba(10,14,26,.98);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;flex-shrink:0;transition:width .3s;overflow:hidden;}
-.sidebar.collapsed{width:68px;}
-.sb-brand{padding:18px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);cursor:pointer;overflow:hidden;}
-.sb-brand .logo-box{width:36px;height:36px;border-radius:9px;flex-shrink:0;}
-.sb-brand-txt{overflow:hidden;white-space:nowrap;}
-.sb-brand-txt h3{font-size:14px;font-weight:800;}
-.sb-brand-txt p{font-size:11px;color:var(--muted);}
-.sb-profile{padding:14px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;overflow:hidden;}
-.av{border-radius:50%;background:linear-gradient(135deg,#00D9FF,#4F46E5);
-  display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;
-  position:relative;overflow:hidden;border:2px solid rgba(255,255,255,.1);}
-.av img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
-.online-dot{position:absolute;bottom:1px;right:1px;width:9px;height:9px;border-radius:50%;background:#22c55e;border:2px solid var(--bg);}
-.sb-profile-info{overflow:hidden;flex:1;}
-.sb-profile-info strong{display:block;font-size:13px;white-space:nowrap;}
-.sb-profile-info small{color:var(--muted);font-size:11px;white-space:nowrap;}
-.svip{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;
-  background:rgba(234,179,8,.15);color:#eab308;border:1px solid rgba(234,179,8,.3);margin-top:3px;}
-nav.sb-nav{flex:1;padding:10px 8px;overflow-y:auto;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;
-  margin-bottom:2px;border:1px solid transparent;transition:all .18s;overflow:hidden;white-space:nowrap;}
-.nav-item:hover{background:rgba(255,255,255,.05);}
-.nav-item.active{background:linear-gradient(90deg,rgba(0,217,255,.14),rgba(79,70,229,.08));border-color:rgba(0,217,255,.18);}
-.nav-item .ni{font-size:18px;flex-shrink:0;}
-.nav-item .nl{font-size:13px;color:var(--muted);flex:1;}
-.nav-item.active .nl{color:#fff;font-weight:700;}
-.nav-badge{background:#00D9FF;color:#000;font-size:10px;font-weight:800;border-radius:99px;padding:1px 6px;}
-.upgrade-card{margin:12px;border-radius:12px;padding:14px;
-  background:linear-gradient(135deg,rgba(234,179,8,.1),rgba(79,70,229,.1));border:1px solid rgba(234,179,8,.2);}
-.upgrade-card h4{color:#eab308;font-size:13px;margin-bottom:6px;}
-.upgrade-card p{color:#9ca3af;font-size:11px;margin-bottom:10px;line-height:1.5;}
-.btn-upgrade{width:100%;padding:8px;border-radius:8px;border:none;cursor:pointer;
-  background:linear-gradient(90deg,#00D9FF,#4F46E5);color:#fff;font-size:12px;font-weight:700;}
-
-/* Topbar */
-.topbar{height:60px;display:flex;align-items:center;padding:0 20px;gap:14px;
-  border-bottom:1px solid var(--border);background:rgba(10,14,26,.95);backdrop-filter:blur(12px);flex-shrink:0;}
-.search-bar{flex:1;max-width:500px;position:relative;}
-.search-bar input{width:100%;padding:8px 12px 8px 36px;border-radius:10px;
-  background:rgba(255,255,255,.06);border:1px solid var(--border);color:#fff;font-size:13px;outline:none;transition:border .2s;}
-.search-bar input:focus{border-color:rgba(0,217,255,.4);}
-.search-bar .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);}
-.tb-actions{display:flex;align-items:center;gap:10px;margin-left:auto;}
-.btn-icon{width:36px;height:36px;border-radius:10px;border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .2s;}
-.btn-icon.primary{background:linear-gradient(90deg,#00D9FF,#4F46E5);color:#fff;font-size:20px;box-shadow:0 0 12px rgba(0,217,255,.3);}
-.btn-icon.ghost{background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;}
-.notif-wrap{position:relative;}
-.notif-dot-r{position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:9px;font-weight:800;
-  border-radius:99px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);}
-.btn-logout{padding:7px 14px;border-radius:8px;border:1px solid rgba(239,68,68,.3);
-  background:rgba(239,68,68,.08);color:#fca5a5;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;}
-.btn-logout:hover{background:rgba(239,68,68,.18);}
-
-/* Main content */
-.main-wrap{display:flex;flex-direction:column;flex:1;overflow:hidden;}
-.main-content{flex:1;overflow-y:auto;padding:24px;}
-.main-content::-webkit-scrollbar{width:4px;}
-.main-content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:9px;}
-
-/* Stats */
-.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;}
-.stat-ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.stat-val{font-size:20px;font-weight:800;}
-.stat-lbl{font-size:11px;color:var(--muted);}
-
-/* Dashboard grid */
-.dash-grid{display:grid;grid-template-columns:1fr 280px;gap:20px;}
-.glass-card{background:rgba(17,24,39,.85);border:1px solid var(--border);border-radius:16px;backdrop-filter:blur(12px);}
-.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
-.sec-head h3{font-size:15px;font-weight:700;}
-.view-all{font-size:12px;color:var(--primary);cursor:pointer;}
-
-/* My Rooms section */
-.rooms-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
-.room-row{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;
-  display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;}
-.room-row:hover{border-color:rgba(0,217,255,.25);transform:translateX(3px);}
-.room-row-ico{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-.room-row-info{flex:1;min-width:0;}
-.room-row-info strong{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.room-row-info small{font-size:11px;color:var(--muted);}
-.room-row-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
-.badge-priv{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;
-  background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.2);}
-.online-count{font-size:11px;color:#22c55e;font-weight:600;}
-
-/* Create room card */
-.create-room-card{background:var(--card);border:1px dashed rgba(0,217,255,.3);border-radius:12px;
-  padding:20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px;}
-.create-room-card:hover{border-color:rgba(0,217,255,.6);background:rgba(0,217,255,.04);}
-.create-room-card h3{font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px;}
-.create-room-card p{font-size:12px;color:var(--muted);}
-
-/* Hero */
-.hero-card{position:relative;overflow:hidden;margin-bottom:20px;border-radius:16px;border:1px solid var(--border);}
-.hero-inner{background:linear-gradient(135deg,#0d1117,#0a1628,#1a0d2e);padding:28px 24px;
-  display:flex;align-items:center;gap:24px;min-height:150px;}
-.hero-text h2{font-size:20px;font-weight:800;margin-bottom:6px;}
-.hero-text p{color:#9ca3af;font-size:13px;margin-bottom:16px;line-height:1.5;}
-.btn-room{padding:10px 20px;border-radius:10px;border:none;cursor:pointer;
-  background:linear-gradient(90deg,#00D9FF,#4F46E5);color:#fff;font-size:13px;font-weight:700;
-  box-shadow:0 0 14px rgba(0,217,255,.28);transition:all .2s;}
-.btn-room:hover{transform:translateY(-1px);box-shadow:0 0 26px rgba(0,217,255,.5);}
-
-/* Panel cards */
-.panel-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;}
-.panel-card:last-child{margin-bottom:0;}
-.right-panel{display:flex;flex-direction:column;}
-.notif-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);}
-.notif-item:last-child{border-bottom:none;}
-.notif-ico{width:32px;height:32px;border-radius:8px;background:rgba(79,70,229,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
-.notif-txt{flex:1;font-size:12px;color:#d1d5db;line-height:1.5;}
-.notif-txt strong{color:#fff;}
-.notif-time{font-size:11px;color:var(--muted);}
-.notif-dot-b{width:7px;height:7px;border-radius:50%;background:#00D9FF;flex-shrink:0;margin-top:3px;}
-.msg-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;}
-.msg-item:last-child{border-bottom:none;}
-.msg-info{flex:1;min-width:0;}
-.msg-info strong{font-size:13px;display:block;}
-.msg-info small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
-.msg-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
-.msg-time{font-size:11px;color:var(--muted);}
-.msg-unread{background:#00D9FF;color:#000;font-size:10px;font-weight:800;border-radius:99px;padding:1px 6px;}
-
-/* Feed */
-.feed-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;}
-.feed-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.feed-user{display:flex;gap:8px;align-items:center;}
-.feed-user strong{font-size:13px;display:block;}
-.feed-user small{color:var(--muted);font-size:11px;}
-.feed-txt{font-size:13px;color:#d1d5db;line-height:1.6;margin-bottom:10px;}
-.feed-actions{display:flex;gap:16px;}
-.feed-actions button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;}
-.feed-actions button:hover{color:var(--primary);}
-
-/* ── MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
-.modal-overlay.hidden{display:none;}
-.modal{background:#111827;border:1px solid var(--border);border-radius:18px;padding:28px;width:440px;max-width:95vw;
-  box-shadow:0 24px 80px rgba(0,0,0,.7);animation:fadeUp .3s both;}
-.modal h2{font-size:18px;font-weight:800;margin-bottom:6px;}
-.modal p{color:var(--muted);font-size:13px;margin-bottom:20px;}
-.modal-actions{display:flex;gap:10px;margin-top:20px;}
-.btn-cancel{flex:1;padding:11px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-size:14px;font-weight:700;cursor:pointer;}
-.btn-confirm{flex:1;padding:11px;border-radius:10px;border:none;background:linear-gradient(90deg,#00D9FF,#4F46E5);color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
-.btn-danger{flex:1;padding:11px;border-radius:10px;border:none;background:linear-gradient(90deg,#ef4444,#dc2626);color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
-.invite-box{background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.2);border-radius:10px;padding:14px;margin-bottom:12px;}
-.invite-url{font-size:12px;color:#67e8f9;word-break:break-all;font-family:monospace;margin-bottom:10px;}
-.invite-meta{font-size:11px;color:var(--muted);}
-.btn-copy{padding:8px 16px;border-radius:8px;border:none;background:rgba(0,217,255,.15);color:#00D9FF;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;}
-.btn-copy:hover{background:rgba(0,217,255,.25);}
-.tag-inp{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);
-  background:rgba(255,255,255,.05);color:#fff;font-size:14px;outline:none;margin-bottom:10px;}
-.tag-inp:focus{border-color:rgba(0,217,255,.4);}
-.tag-inp::placeholder{color:var(--muted);}
-.emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px;}
-.emoji-opt{padding:8px;border-radius:8px;border:2px solid transparent;background:rgba(255,255,255,.04);
-  font-size:20px;cursor:pointer;text-align:center;transition:all .15s;}
-.emoji-opt:hover,.emoji-opt.sel{border-color:#00D9FF;background:rgba(0,217,255,.1);}
-
-/* ── ROOM VIEW ── */
-#roomView{background:var(--bg);}
-.room-sidebar{width:220px;background:rgba(10,14,26,.98);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;flex-shrink:0;}
-.room-sb-header{padding:16px;}
-.back-btn{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;cursor:pointer;
-  margin-bottom:16px;transition:color .2s;}
-.back-btn:hover{color:#fff;}
-.room-hero-img{width:100%;height:110px;border-radius:12px;overflow:hidden;margin-bottom:14px;
-  background:linear-gradient(135deg,#0d1117,#0a1628);display:flex;align-items:center;justify-content:center;font-size:48px;}
-.room-hero-img svg{width:100%;height:100%;}
-.room-sb-name{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:4px;}
-.room-sb-desc{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px;}
-.room-id-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
-.room-id-txt{font-size:11px;color:var(--muted);font-family:monospace;}
-.btn-copy-id{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;transition:color .2s;}
-.btn-copy-id:hover{color:var(--primary);}
-.online-info{font-size:12px;color:#22c55e;font-weight:600;margin-bottom:14px;}
-.online-avatars{display:flex;margin-bottom:16px;}
-.online-av{width:28px;height:28px;border-radius:50%;border:2px solid var(--bg);
-  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;
-  background:linear-gradient(135deg,#00D9FF,#4F46E5);}
-.online-av:not(:first-child){margin-left:-8px;}
-
-.room-nav{padding:0 8px;flex:1;}
-.room-nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;
-  margin-bottom:2px;border:1px solid transparent;transition:all .15s;color:var(--muted);font-size:13px;}
-.room-nav-item:hover{background:rgba(255,255,255,.05);color:#fff;}
-.room-nav-item.active{background:rgba(0,217,255,.12);border-color:rgba(0,217,255,.2);color:#fff;font-weight:700;}
-
-.invite-section{padding:14px 16px;border-top:1px solid var(--border);margin-top:auto;}
-.invite-section h4{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
-.invite-section p{font-size:11px;color:var(--muted);margin-bottom:10px;}
-.btn-invite{width:100%;padding:9px;border-radius:9px;border:none;cursor:pointer;
-  background:linear-gradient(90deg,#00D9FF,#4F46E5);color:#fff;font-size:12px;font-weight:700;
-  box-shadow:0 0 12px rgba(0,217,255,.25);transition:all .2s;}
-.btn-invite:hover{box-shadow:0 0 22px rgba(0,217,255,.5);}
-
-/* Room main */
-.room-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.room-topbar{height:60px;display:flex;align-items:center;padding:0 20px;gap:14px;
-  border-bottom:1px solid var(--border);background:rgba(10,14,26,.95);backdrop-filter:blur(12px);flex-shrink:0;}
-.room-name-hd{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;}
-.room-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px;background:rgba(10,14,26,.8);flex-shrink:0;}
-.room-tab{padding:12px 18px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);
-  border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:6px;}
-.room-tab:hover{color:#fff;}
-.room-tab.active{color:var(--primary);border-bottom-color:var(--primary);}
-
-/* Chat */
-.chat-area{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:4px;}
-.chat-area::-webkit-scrollbar{width:4px;}
-.chat-area::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:9px;}
-.msg-group{margin-bottom:16px;}
-.msg-row{display:flex;gap:12px;align-items:flex-start;}
-.msg-row.bot .msg-av{background:linear-gradient(135deg,#4F46E5,#7C3AED);}
-.msg-av{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;
-  justify-content:center;font-size:13px;font-weight:700;background:linear-gradient(135deg,#00D9FF,#4F46E5);
-  border:2px solid rgba(255,255,255,.1);}
-.msg-content{flex:1;min-width:0;}
-.msg-header{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
-.msg-name{font-size:14px;font-weight:700;}
-.msg-time-sm{font-size:11px;color:var(--muted);}
-.bot-tag{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(124,58,237,.25);color:#a78bfa;}
-.svip-tag{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(234,179,8,.2);color:#eab308;}
-.msg-bubble{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:0 12px 12px 12px;
-  padding:10px 14px;font-size:14px;color:#e5e7eb;line-height:1.6;max-width:680px;word-break:break-word;}
-.msg-bubble.ai{background:rgba(79,70,229,.1);border-color:rgba(79,70,229,.2);}
-.msg-bubble.own{background:rgba(0,217,255,.08);border-color:rgba(0,217,255,.18);}
-.msg-reactions{display:flex;gap:6px;margin-top:6px;}
-.reaction{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:99px;
-  padding:3px 10px;font-size:12px;cursor:pointer;transition:all .15s;}
-.reaction:hover{border-color:rgba(0,217,255,.4);}
-.file-attach{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;
-  padding:12px;display:flex;align-items:center;gap:12px;margin-top:8px;max-width:320px;cursor:pointer;}
-.file-attach:hover{border-color:rgba(0,217,255,.3);}
-.file-ico{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-.file-info strong{font-size:13px;display:block;}
-.file-info small{font-size:11px;color:var(--muted);}
-.meeting-card{background:rgba(79,70,229,.1);border:1px solid rgba(79,70,229,.3);border-radius:12px;
-  padding:14px;max-width:340px;margin-top:6px;display:flex;align-items:center;gap:12px;}
-.meeting-ico{width:40px;height:40px;border-radius:10px;background:rgba(79,70,229,.2);
-  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-.meeting-info strong{font-size:14px;font-weight:700;display:block;}
-.meeting-info small{font-size:11px;color:var(--muted);}
-.btn-join{padding:8px 16px;border-radius:8px;border:none;background:var(--secondary);color:#fff;
-  font-size:12px;font-weight:700;cursor:pointer;margin-left:auto;flex-shrink:0;}
-
-/* Chat input */
-.chat-input-wrap{padding:14px 20px;border-top:1px solid var(--border);background:rgba(10,14,26,.9);}
-.chat-input-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);
-  border:1px solid var(--border);border-radius:14px;padding:4px 8px 4px 14px;transition:border .2s;}
-.chat-input-row:focus-within{border-color:rgba(0,217,255,.35);}
-.chat-input-row input{flex:1;background:none;border:none;color:#fff;font-size:14px;outline:none;padding:8px 0;}
-.chat-input-row input::placeholder{color:var(--muted);}
-.chat-tools{display:flex;align-items:center;gap:4px;}
-.chat-tool-btn{width:32px;height:32px;border-radius:8px;border:none;cursor:pointer;background:transparent;
-  color:var(--muted);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.chat-tool-btn:hover{background:rgba(255,255,255,.08);color:#fff;}
-.btn-send{width:36px;height:36px;border-radius:10px;border:none;cursor:pointer;
-  background:linear-gradient(90deg,#00D9FF,#4F46E5);color:#fff;font-size:18px;
-  display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(0,217,255,.3);transition:all .2s;}
-.btn-send:hover{box-shadow:0 0 22px rgba(0,217,255,.5);}
-
-/* Voice bar */
-.voice-bar{padding:10px 20px;background:rgba(0,217,255,.05);border-top:1px solid rgba(0,217,255,.1);
-  display:flex;align-items:center;gap:12px;}
-.voice-bar.hidden{display:none;}
-.voice-status{font-size:13px;color:#67e8f9;display:flex;align-items:center;gap:8px;}
-.voice-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 1s infinite;}
-.btn-mic{padding:7px 14px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:all .2s;}
-.btn-mic.on{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3);}
-.btn-mic.off{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);}
-.btn-leave-vc{padding:7px 14px;border-radius:8px;border:1px solid rgba(239,68,68,.3);
-  background:rgba(239,68,68,.1);color:#fca5a5;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto;}
-
-/* Room right panel */
-.room-right{width:280px;background:rgba(10,14,26,.98);border-left:1px solid var(--border);
-  display:flex;flex-direction:column;overflow-y:auto;}
-.room-right::-webkit-scrollbar{width:4px;}
-.room-right::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:9px;}
-.rr-section{padding:16px;border-bottom:1px solid var(--border);}
-.rr-section:last-child{border-bottom:none;}
-.rr-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-.rr-head span{font-size:13px;font-weight:700;}
-.btn-rr-add{width:24px;height:24px;border-radius:6px;border:none;cursor:pointer;
-  background:rgba(0,217,255,.12);color:#00D9FF;font-size:16px;display:flex;align-items:center;justify-content:center;}
-.member-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.03);}
-.member-row:last-child{border-bottom:none;}
-.member-info{flex:1;}
-.member-info strong{font-size:13px;display:block;}
-.member-role{font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;}
-.role-owner{background:rgba(234,179,8,.15);color:#eab308;}
-.role-mod{background:rgba(0,217,255,.12);color:#00D9FF;}
-.role-online{color:#22c55e;font-size:11px;font-weight:600;}
-.task-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.03);}
-.task-row:last-child{border-bottom:none;}
-.task-check{width:16px;height:16px;border-radius:4px;border:1.5px solid rgba(255,255,255,.2);
-  flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.task-check.done{background:var(--primary);border-color:var(--primary);}
-.task-info{flex:1;}
-.task-info strong{font-size:12px;display:block;}
-.task-info small{font-size:11px;color:var(--muted);}
-.task-prio{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;}
-.prio-h{background:rgba(239,68,68,.15);color:#f87171;}
-.prio-m{background:rgba(234,179,8,.15);color:#eab308;}
-.prio-l{background:rgba(34,197,94,.15);color:#4ade80;}
-.file-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03);}
-.file-row:last-child{border-bottom:none;}
-.file-row-ico{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
-.file-row-info{flex:1;}
-.file-row-info strong{font-size:12px;display:block;}
-.file-row-info small{font-size:11px;color:var(--muted);}
-.btn-dl{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;transition:color .15s;}
-.btn-dl:hover{color:var(--primary);}
-.notes-box{background:rgba(234,179,8,.05);border:1px solid rgba(234,179,8,.15);border-radius:10px;padding:12px;}
-.notes-box h5{font-size:12px;font-weight:700;color:#eab308;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
-.notes-content{font-size:12px;color:#d1d5db;line-height:1.7;}
-.notes-content ul{padding-left:16px;}
-
-/* Join room screen */
-.join-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200;}
-.join-screen.hidden{display:none;}
-.join-card{width:400px;max-width:95vw;background:#111827;border:1px solid var(--border);border-radius:18px;
-  padding:32px;box-shadow:0 24px 80px rgba(0,0,0,.7);text-align:center;animation:fadeUp .5s both;}
-.join-card .logo-box{width:60px;height:60px;border-radius:14px;margin:0 auto 16px;}
-.join-card h2{font-size:20px;font-weight:800;margin-bottom:6px;}
-.join-card p{color:var(--muted);font-size:13px;margin-bottom:20px;}
-.join-info{background:rgba(0,217,255,.06);border:1px solid rgba(0,217,255,.15);border-radius:10px;padding:14px;margin-bottom:20px;text-align:left;}
-.join-info strong{font-size:14px;display:block;margin-bottom:4px;}
-.join-info small{font-size:12px;color:var(--muted);}
-.timer-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(234,179,8,.1);
-  border:1px solid rgba(234,179,8,.25);border-radius:99px;padding:4px 12px;font-size:12px;color:#eab308;margin-bottom:16px;}
-
-/* Animations */
-@keyframes splashIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* Loader */
-.loader{width:20px;height:20px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--primary);
-  border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
-
-/* Toast */
-.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px;}
-.toast{background:#1f2937;border:1px solid var(--border);border-radius:10px;padding:12px 16px;
-  font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);
-  animation:fadeUp .3s both;min-width:240px;}
-.toast.success{border-color:rgba(34,197,94,.3);color:#86efac;}
-.toast.error{border-color:rgba(239,68,68,.3);color:#fca5a5;}
-.toast.info{border-color:rgba(0,217,255,.3);color:#67e8f9;}
-
-/* Responsive */
-@media(max-width:1100px){.room-right{display:none;}}
-@media(max-width:800px){.dash-grid{grid-template-columns:1fr;}.stats-strip{grid-template-columns:repeat(2,1fr);}}
-</style>
+<link rel="stylesheet" href="css/main.css"/>
+<link rel="stylesheet" href="css/animations.css"/>
+<link rel="stylesheet" href="css/responsive.css"/>
 </head>
 <body>
-<canvas id="particles"></canvas>
-<div class="toast-wrap" id="toastWrap"></div>
+<canvas id="bg"></canvas>
+<div id="toasts"></div>
 
-<!-- ══ JOIN SCREEN (invite link handler) ══ -->
-<div class="join-screen hidden" id="joinScreen">
+<!-- ══ JOIN ══ -->
+<div class="screen off" id="join">
   <div class="join-card">
-    <div class="logo-box" style="background:linear-gradient(145deg,#0d1117,#1a1f2e);display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(0,217,255,.4)">
-      <svg viewBox="0 0 60 60" fill="none" width="36" height="36"><defs><linearGradient id="ljg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00D9FF"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient></defs><path d="M8 52V8l22 36L52 8v44" stroke="url(#ljg)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div class="logo-box" style="width:58px;height:58px;border-radius:14px">
+      <svg viewBox="0 0 60 60" fill="none" width="36" height="36"><defs><linearGradient id="jlg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00D9FF"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient></defs><path d="M8 52V8l22 36L52 8v44" stroke="url(#jlg)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
-    <h2 id="joinRoomName">You're invited!</h2>
-    <p id="joinRoomDesc">You've been invited to join a private room on Nexora Studio.</p>
-    <div class="join-info" id="joinInfo" style="display:none">
-      <strong id="joinRoomLabel">Room Name</strong>
-      <small id="joinRoomMeta">Expires in: checking...</small>
+    <h2 id="jTitle">You're invited!</h2>
+    <p id="jDesc">You've been invited to join a private room on Nexora Studio.</p>
+    <div class="join-info" id="jInfo" style="display:none">
+      <strong id="jRoom">Room Name</strong>
+      <small id="jMeta">Checking...</small>
     </div>
-    <div class="timer-pill" id="joinTimer" style="display:none">⏳ <span id="joinTimerTxt">Checking...</span></div>
-    <div id="joinMsgBox" class="msg-box" style="margin-bottom:14px;text-align:left"></div>
-    <button class="btn-primary" id="joinBtn" style="margin-bottom:0" onclick="handleJoinRoom()">
-      <span id="joinBtnTxt">Join Room</span>
-    </button>
-    <div style="margin-top:12px"><a style="color:var(--muted);font-size:12px;cursor:pointer" onclick="cancelJoin()">← Back to app</a></div>
+    <div class="timer" id="jTimer" style="display:none">⏳ <span id="jTick">—</span></div>
+    <div class="alert" id="jAlert" style="margin-bottom:12px"></div>
+    <button class="btn-main" id="jBtn" onclick="joinRoom()" style="margin-bottom:8px">Join Room</button>
+    <div><a style="color:var(--muted);font-size:12px;cursor:pointer" onclick="cancelJoin()">← Back</a></div>
   </div>
 </div>
 
@@ -468,183 +40,154 @@ nav.sb-nav{flex:1;padding:10px 8px;overflow-y:auto;}
       <svg viewBox="0 0 60 60" fill="none" width="60" height="60"><defs><linearGradient id="slg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00D9FF"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient></defs><path d="M8 52V8l22 36L52 8v44" stroke="url(#slg)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><polygon points="30,24 33,31 27,31" fill="#00D9FF" opacity=".9"/></svg>
     </div>
   </div>
-  <div class="splash-title">
-    <h1>Nexora Studio</h1>
-    <p>AI-Powered Private Collaboration</p>
-  </div>
-  <div class="splash-btn-wrap">
-    <button class="btn-glow" onclick="goToAuth()">Get Started</button>
-  </div>
+  <div class="splash-title"><h1>Nexora Studio</h1><p>Private AI Collaboration</p></div>
+  <div class="splash-btn"><button class="btn-glow" onclick="goAuth()">Get Started</button></div>
 </div>
 
 <!-- ══ AUTH ══ -->
-<div class="screen hidden" id="auth">
+<div class="screen off" id="auth">
   <div class="auth-card">
     <div class="auth-logo">
-      <div class="logo-box" style="width:56px;height:56px;border-radius:13px">
+      <div class="logo-box" style="width:54px;height:54px;border-radius:13px">
         <svg viewBox="0 0 60 60" fill="none" width="34" height="34"><defs><linearGradient id="alg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00D9FF"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient></defs><path d="M8 52V8l22 36L52 8v44" stroke="url(#alg)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
-      <div style="text-align:center">
-        <h2 id="authTitle" style="font-size:22px;font-weight:800">Welcome back</h2>
-        <p id="authSub" style="color:var(--muted);font-size:13px;margin-top:3px">Sign in to Nexora Studio</p>
-      </div>
+      <h2 id="aTitle">Welcome back</h2>
+      <p id="aSub">Sign in to Nexora Studio</p>
     </div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
-      <button class="auth-tab" id="tabReg" onclick="switchTab('register')">Create Account</button>
+    <div class="tabs">
+      <button class="tab on" id="tIn" onclick="switchTab('in')">Sign In</button>
+      <button class="tab" id="tUp" onclick="switchTab('up')">Create Account</button>
     </div>
-    <div class="msg-box" id="authErr"></div>
-    <div class="msg-box" id="authOk"></div>
-    <div class="inp-wrap" id="nameWrap" style="display:none">
-      <span class="ico">👤</span><input type="text" id="nameInp" placeholder="Full Name"/>
+    <div class="alert" id="aErr"></div>
+    <div class="alert" id="aOk"></div>
+    <div class="field" id="nameF" style="display:none">
+      <span class="ico">👤</span><input type="text" id="nameI" placeholder="Full Name" autocomplete="name"/>
     </div>
-    <div class="inp-wrap">
-      <span class="ico">✉️</span><input type="email" id="emailInp" placeholder="Email Address"/>
-    </div>
-    <div class="inp-wrap">
-      <span class="ico">🔒</span><input type="password" id="passInp" placeholder="Password"/>
-    </div>
-    <div class="forgot-link" id="forgotWrap">
-      <a onclick="handleForgot()">Forgot Password?</a>
-    </div>
-    <button class="btn-primary" id="authBtn" onclick="handleAuth()">Sign In</button>
-    <div class="divider"><span>Or continue with</span></div>
-    <button class="btn-google" onclick="handleGoogle()">
+    <div class="field"><span class="ico">✉️</span><input type="email" id="emailI" placeholder="Email Address" autocomplete="email"/></div>
+    <div class="field"><span class="ico">🔒</span><input type="password" id="passI" placeholder="Password" autocomplete="current-password"/></div>
+    <div class="forgot" id="forgotF"><a onclick="forgotPw()">Forgot Password?</a></div>
+    <button class="btn-main" id="aBtn" onclick="doAuth()">Sign In</button>
+    <div class="sep"><span>Or continue with</span></div>
+    <button class="btn-google" onclick="doGoogle()">
       <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.5 1.2 8.9 3.2l6.6-6.6C35.5 2.5 30.1 0 24 0 14.6 0 6.5 5.5 2.5 13.6l7.7 6C12.1 13.2 17.6 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.4 5.8C43.5 37.5 46.5 31.5 46.5 24.5z"/><path fill="#FBBC05" d="M10.2 28.4A14.5 14.5 0 0 1 9.5 24c0-1.5.3-3 .7-4.4l-7.7-6A23.9 23.9 0 0 0 0 24c0 3.8.9 7.4 2.5 10.6l7.7-6.2z"/><path fill="#34A853" d="M24 48c6.1 0 11.2-2 14.9-5.5l-7.4-5.8c-2 1.4-4.6 2.2-7.5 2.2-6.4 0-11.9-3.7-13.8-9.5l-7.7 6C6.5 42.5 14.6 48 24 48z"/></svg>
       Continue with Google
     </button>
-    <div class="auth-footer">
-      <span id="authFootTxt">Don't have an account?</span>
-      <a id="authFootLink" onclick="switchTab('register')"> Sign Up</a>
-    </div>
+    <div class="auth-foot"><span id="aFT">Don't have an account?</span> <a id="aFL" onclick="switchTab('up')">Sign Up</a></div>
   </div>
 </div>
 
-<!-- ══ DASHBOARD ══ -->
-<div id="dashboard" class="hidden">
-  <div class="sidebar" id="sidebar">
-    <div class="sb-brand" onclick="toggleSidebar()">
-      <div class="logo-box" style="width:36px;height:36px;border-radius:9px;flex-shrink:0">
+<!-- ══ APP (DASHBOARD) ══ -->
+<div id="app" class="off">
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sb-overlay off" id="sbOverlay" onclick="closeSb()"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sb">
+    <div class="sb-brand" onclick="toggleSb()">
+      <div class="logo-box" style="width:34px;height:34px;border-radius:9px;flex-shrink:0">
         <svg viewBox="0 0 60 60" fill="none" width="22" height="22"><defs><linearGradient id="dlg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00D9FF"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient></defs><path d="M8 52V8l22 36L52 8v44" stroke="url(#dlg)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
-      <div class="sb-brand-txt">
-        <h3>Nexora Studio</h3><p>v2.0 Premium</p>
-      </div>
+      <div class="sb-brand-txt"><h3>Nexora Studio</h3><p>Private Rooms</p></div>
     </div>
-    <div class="sb-profile">
-      <div class="av" id="sbAv" style="width:38px;height:38px;font-size:13px">
-        <div class="online-dot"></div>
-      </div>
-      <div class="sb-profile-info">
-        <strong id="sbName">—</strong>
-        <small id="sbEmail">—</small>
-        <div class="svip">⭐ SVIP</div>
-      </div>
+    <div class="sb-prof">
+      <div class="av" id="sbAv" style="width:36px;height:36px;font-size:12px"><div class="dot-on"></div></div>
+      <div class="sb-profile-info"><strong id="sbName">—</strong><small id="sbEmail">—</small><div class="svip">⭐ SVIP</div></div>
     </div>
     <nav class="sb-nav">
-      <div class="nav-item active" onclick="setNav(this,'dashboard-home')"><span class="ni">🏠</span><span class="nl">Dashboard</span></div>
-      <div class="nav-item" onclick="setNav(this,'my-rooms')"><span class="ni">🚪</span><span class="nl">My Rooms</span></div>
-      <div class="nav-item" onclick="setNav(this,'friends')"><span class="ni">👥</span><span class="nl">Friends</span></div>
-      <div class="nav-item" onclick="setNav(this,'messages')"><span class="ni">✉️</span><span class="nl">Messages</span><span class="nav-badge">3</span></div>
-      <div class="nav-item" onclick="setNav(this,'community')"><span class="ni">🌐</span><span class="nl">Community</span></div>
-      <div class="nav-item" onclick="setNav(this,'notifications')"><span class="ni">🔔</span><span class="nl">Notifications</span><span class="nav-badge">5</span></div>
-      <div class="nav-item" onclick="setNav(this,'settings')"><span class="ni">⚙️</span><span class="nl">Settings</span></div>
+      <div class="ni-row on" onclick="navTo(this,'home')"><span class="ni">🏠</span><span class="nl">Dashboard</span></div>
+      <div class="ni-row" onclick="navTo(this,'rooms')"><span class="ni">🚪</span><span class="nl">My Rooms</span></div>
+      <div class="ni-row" onclick="navTo(this,'profile')"><span class="ni">👤</span><span class="nl">Profile</span></div>
+      <div class="ni-row" onclick="navTo(this,'settings')"><span class="ni">⚙️</span><span class="nl">Settings</span></div>
     </nav>
-    <div class="upgrade-card" id="upgradeCard">
+    <div class="upgrade-card" id="upCard">
       <h4>👑 Upgrade to SVIP</h4>
       <p>Unlock exclusive features and boost your experience.</p>
-      <button class="btn-upgrade">Upgrade Now</button>
+      <button class="btn-up" onclick="toast('Coming soon!','inf')">Upgrade Now</button>
     </div>
   </div>
 
+  <!-- Main -->
   <div class="main-wrap">
+    <!-- Topbar -->
     <div class="topbar">
-      <div class="search-bar"><span class="si">🔍</span><input placeholder="Search rooms, people..."/></div>
-      <div class="tb-actions">
-        <button class="btn-icon primary" onclick="openModal('createRoom')">+</button>
-        <div class="notif-wrap"><button class="btn-icon ghost">🔔</button><span class="notif-dot-r">5</span></div>
-        <div class="av" id="topAv" style="width:34px;height:34px;font-size:12px;cursor:pointer"></div>
-        <span id="topName" style="font-size:13px;font-weight:600;color:#e5e7eb"></span>
-        <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
+      <button class="btn-menu" id="menuBtn" onclick="openSb()">☰</button>
+      <div class="srch"><span class="si">🔍</span><input placeholder="Search rooms..." id="srchInp" oninput="doSearch(this.value)"/></div>
+      <div class="tb-r">
+        <button class="ib pri" onclick="openM('createRoom')" title="Create Room">+</button>
+        <div class="nb"><button class="ib gh" onclick="toast('No new notifications','inf')">🔔</button><span class="dot" id="notifDot" style="display:none">!</span></div>
+        <div class="av" id="topAv" style="width:32px;height:32px;font-size:11px;cursor:pointer" onclick="openM('profile')"></div>
+        <span class="tb-name" id="topName"></span>
+        <button class="btn-out" onclick="doLogout()">Sign Out</button>
       </div>
     </div>
 
-    <div class="main-content">
-      <div style="margin-bottom:22px">
-        <h1 id="welcomeMsg" style="font-size:26px;font-weight:800">Welcome back! 👋</h1>
-        <p style="color:var(--muted);font-size:14px;margin-top:4px">Ready to collaborate today?</p>
+    <!-- Content -->
+    <div class="main-scroll" id="mainScroll">
+      <div style="margin-bottom:20px">
+        <h1 id="wMsg" style="font-size:clamp(20px,4vw,26px);font-weight:800">Welcome! 👋</h1>
+        <p style="color:var(--muted);font-size:13px;margin-top:4px">Ready to collaborate today?</p>
       </div>
 
-      <div class="stats-strip">
-        <div class="stat-card"><div class="stat-ico" style="background:rgba(0,217,255,.1);border:1px solid rgba(0,217,255,.18)">🚪</div><div><div class="stat-val" style="color:#00D9FF" id="statRooms">0</div><div class="stat-lbl">My Rooms</div></div></div>
-        <div class="stat-card"><div class="stat-ico" style="background:rgba(79,70,229,.1);border:1px solid rgba(79,70,229,.18)">👥</div><div><div class="stat-val" style="color:#4F46E5" id="statMembers">0</div><div class="stat-lbl">Total Members</div></div></div>
-        <div class="stat-card"><div class="stat-ico" style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.18)">💬</div><div><div class="stat-val" style="color:#7C3AED" id="statMsgs">0</div><div class="stat-lbl">Messages</div></div></div>
-        <div class="stat-card"><div class="stat-ico" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.18)">🤖</div><div><div class="stat-val" style="color:#22c55e">AI</div><div class="stat-lbl">Assistant Active</div></div></div>
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat"><div class="stat-ic" style="background:rgba(0,217,255,.1);border:1px solid rgba(0,217,255,.16)">🚪</div><div><div class="stat-v" style="color:#00D9FF" id="sRooms">0</div><div class="stat-l">My Rooms</div></div></div>
+        <div class="stat"><div class="stat-ic" style="background:rgba(79,70,229,.1);border:1px solid rgba(79,70,229,.16)">👥</div><div><div class="stat-v" style="color:#4F46E5" id="sMembers">0</div><div class="stat-l">Members</div></div></div>
+        <div class="stat"><div class="stat-ic" style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.16)">💬</div><div><div class="stat-v" style="color:#7C3AED" id="sMsgs">0</div><div class="stat-l">Messages</div></div></div>
+        <div class="stat"><div class="stat-ic" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.16)">🤖</div><div><div class="stat-v" style="color:#22c55e">AI</div><div class="stat-l">Assistant</div></div></div>
       </div>
 
-      <div class="dash-grid">
+      <div class="dg">
         <div>
           <!-- Hero -->
-          <div class="hero-card glass-card" style="margin-bottom:20px">
+          <div class="hero glass" style="margin-bottom:18px">
             <div class="hero-inner">
-              <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:.08" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="hg" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0L0 0 0 30" fill="none" stroke="#00D9FF" stroke-width=".5"/></pattern></defs><rect width="100%" height="100%" fill="url(#hg)"/></svg>
+              <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:.07" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="hg" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0L0 0 0 28" fill="none" stroke="#00D9FF" stroke-width=".5"/></pattern></defs><rect width="100%" height="100%" fill="url(#hg)"/></svg>
               <div style="position:relative;flex:1">
                 <h2>Create a Private Room</h2>
-                <p>Build your secure collaboration space. Invite-only access with time-limited links.</p>
-                <button class="btn-room" onclick="openModal('createRoom')">+ Create Room</button>
+                <p>Secure collaboration space. Invite-only with time-limited links.</p>
+                <button class="btn-act" onclick="openM('createRoom')">+ Create Room</button>
               </div>
-              <svg viewBox="0 0 140 140" width="120" height="120" style="flex-shrink:0;filter:drop-shadow(0 0 18px rgba(0,217,255,.4))">
+              <svg viewBox="0 0 130 130" width="110" height="110" style="flex-shrink:0;filter:drop-shadow(0 0 16px rgba(0,217,255,.38))">
                 <defs><linearGradient id="ct" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00D9FF" stop-opacity=".8"/><stop offset="100%" stop-color="#4F46E5" stop-opacity=".6"/></linearGradient></defs>
-                <polygon points="70,20 110,42 70,64 30,42" fill="url(#ct)"/>
-                <polygon points="30,42 70,64 70,108 30,86" fill="#1a2744"/>
-                <polygon points="70,64 110,42 110,86 70,108" fill="#0d1f3c"/>
-                <polygon points="70,20 110,42 70,64 30,42" fill="none" stroke="rgba(0,217,255,.5)" stroke-width="1"/>
-                <circle cx="70" cy="64" r="5" fill="rgba(0,217,255,.7)"/><circle cx="70" cy="64" r="2.5" fill="#fff"/>
+                <polygon points="65,18 105,40 65,62 25,40" fill="url(#ct)"/>
+                <polygon points="25,40 65,62 65,106 25,84" fill="#1a2744"/>
+                <polygon points="65,62 105,40 105,84 65,106" fill="#0d1f3c"/>
+                <polygon points="65,18 105,40 65,62 25,40" fill="none" stroke="rgba(0,217,255,.45)" stroke-width="1"/>
+                <circle cx="65" cy="62" r="5" fill="rgba(0,217,255,.65)"/>
+                <circle cx="65" cy="62" r="2.5" fill="#fff"/>
               </svg>
             </div>
           </div>
 
           <!-- My Rooms -->
-          <div class="sec-head"><h3>My Rooms</h3><span class="view-all" onclick="openModal('createRoom')">+ New Room</span></div>
-          <div class="rooms-list" id="myRoomsList">
-            <div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">
-              No rooms yet. Create your first private room!
-            </div>
-          </div>
+          <div class="row-hd"><h3>My Rooms</h3><button class="lnk" onclick="openM('createRoom')">+ New Room</button></div>
+          <div class="room-rows" id="roomList"><div class="room-empty">No rooms yet. Create your first private room! 🚀</div></div>
 
           <!-- Feed -->
-          <div class="sec-head" style="margin-top:20px"><h3>Community Highlights</h3><span class="view-all">View all</span></div>
-          <div class="feed-card">
+          <div class="row-hd" style="margin-top:18px"><h3>Community</h3><button class="lnk">View all</button></div>
+          <div class="feed">
             <div class="feed-hd">
-              <div class="feed-user"><div class="av" style="width:36px;height:36px;font-size:11px;background:linear-gradient(135deg,#4F46E5,#7C3AED)">RV</div><div><strong>Rohan Verma</strong><small>@rohan_dev · 2h ago</small></div></div>
-              <span style="color:var(--muted);cursor:pointer">⋯</span>
+              <div class="feed-user"><div class="av" style="width:34px;height:34px;font-size:11px;background:linear-gradient(135deg,#4F46E5,#7C3AED)">RV</div><div><strong>Rohan Verma</strong><small>@rohan_dev · 2h ago</small></div></div>
             </div>
             <p class="feed-txt">Just shipped a new feature for real-time collaboration. Excited to hear your thoughts! 🚀</p>
-            <div class="feed-actions"><button>❤️ 24</button><button>💬 8</button><button>🔄 5</button><button>🔖</button></div>
+            <div class="feed-acts"><button onclick="this.textContent=this.textContent.includes('24')?'❤️ 25':'❤️ 24'">❤️ 24</button><button>💬 8</button><button>🔄 5</button><button>🔖</button></div>
           </div>
-          <div class="feed-card">
+          <div class="feed">
             <div class="feed-hd">
-              <div class="feed-user"><div class="av" style="width:36px;height:36px;font-size:11px;background:linear-gradient(135deg,#EC4899,#4F46E5)">LP</div><div><strong>Lisa Park</strong><small>@lisa_designs · 4h ago</small></div></div>
-              <span style="color:var(--muted);cursor:pointer">⋯</span>
+              <div class="feed-user"><div class="av" style="width:34px;height:34px;font-size:11px;background:linear-gradient(135deg,#EC4899,#4F46E5)">LP</div><div><strong>Lisa Park</strong><small>@lisa_designs · 4h ago</small></div></div>
             </div>
             <p class="feed-txt">Glassmorphism + dark mode = perfection ✨ Who else loves this aesthetic?</p>
-            <div class="feed-actions"><button>❤️ 47</button><button>💬 12</button><button>🔄 9</button><button>🔖</button></div>
+            <div class="feed-acts"><button>❤️ 47</button><button>💬 12</button><button>🔄 9</button><button>🔖</button></div>
           </div>
         </div>
 
-        <div class="right-panel">
-          <div class="panel-card">
-            <div class="sec-head" style="margin-bottom:10px"><span style="font-size:14px;font-weight:700">Notifications</span><span class="view-all" style="font-size:12px">View all</span></div>
-            <div class="notif-item"><div class="notif-ico">👥</div><div style="flex:1"><div class="notif-txt">Emma invited you to <strong>Design Inspiration</strong></div><div class="notif-time">2m ago</div></div><div class="notif-dot-b"></div></div>
-            <div class="notif-item"><div class="notif-ico">❤️</div><div style="flex:1"><div class="notif-txt">Your project got <strong>5 new likes</strong></div><div class="notif-time">1h ago</div></div><div class="notif-dot-b"></div></div>
-            <div class="notif-item"><div class="notif-ico">💬</div><div style="flex:1"><div class="notif-txt">New message from <strong>Sarah Chen</strong></div><div class="notif-time">2h ago</div></div><div class="notif-dot-b"></div></div>
-            <div class="notif-item"><div class="notif-ico">🏆</div><div style="flex:1"><div class="notif-txt">Badge earned: <strong>AI Pioneer</strong></div><div class="notif-time">3h ago</div></div><div class="notif-dot-b"></div></div>
-          </div>
-          <div class="panel-card">
-            <div class="sec-head" style="margin-bottom:10px"><span style="font-size:14px;font-weight:700">Recent Messages</span><span class="view-all" style="font-size:12px">View all</span></div>
-            <div class="msg-item"><div class="av" style="width:34px;height:34px;font-size:11px;background:linear-gradient(135deg,#00D9FF,#4F46E5)">SC</div><div class="msg-info"><strong>Sarah Chen</strong><small>Hey! How's the project going?</small></div><div class="msg-meta"><span class="msg-time">2m</span><span class="msg-unread">2</span></div></div>
-            <div class="msg-item"><div class="av" style="width:34px;height:34px;font-size:11px;background:linear-gradient(135deg,#4F46E5,#7C3AED)">AM</div><div class="msg-info"><strong>Alex Morgan</strong><small>Can we schedule a call?</small></div><div class="msg-meta"><span class="msg-time">1h</span></div></div>
-            <div class="msg-item"><div class="av" style="width:34px;height:34px;font-size:11px;background:linear-gradient(135deg,#7C3AED,#EC4899)">DC</div><div class="msg-info"><strong>Dev Community</strong><small>New updates are live!</small></div><div class="msg-meta"><span class="msg-time">3h</span><span class="msg-unread">5</span></div></div>
+        <!-- Right panel -->
+        <div class="rp">
+          <div class="panel">
+            <div class="row-hd" style="margin-bottom:8px"><h3>Notifications</h3><button class="lnk">Clear all</button></div>
+            <div class="ni-item"><div class="ni-ico">👥</div><div style="flex:1"><div class="ni-txt">Invited to <strong>Design Inspiration</strong></div><div class="ni-t">2m ago</div></div><div class="ni-dot"></div></div>
+            <div class="ni-item"><div class="ni-ico">❤️</div><div style="flex:1"><div class="ni-txt">Project got <strong>5 new likes</strong></div><div class="ni-t">1h ago</div></div><div class="ni-dot"></div></div>
+            <div class="ni-item"><div class="ni-ico">🏆</div><div style="flex:1"><div class="ni-txt">Badge earned: <strong>AI Pioneer</strong></div><div class="ni-t">3h ago</div></div><div class="ni-dot"></div></div>
           </div>
         </div>
       </div>
@@ -653,874 +196,191 @@ nav.sb-nav{flex:1;padding:10px 8px;overflow-y:auto;}
 </div>
 
 <!-- ══ ROOM VIEW ══ -->
-<div id="roomView" class="hidden">
-  <div class="room-sidebar">
-    <div class="room-sb-header">
-      <div class="back-btn" onclick="backToDashboard()">← Back to Dashboard</div>
-      <div class="room-hero-img" id="roomHeroEmoji">🤖</div>
-      <div class="room-sb-name" id="roomSbName">Room Name <span style="font-size:11px;font-weight:500;padding:2px 7px;border-radius:99px;background:rgba(0,217,255,.12);color:#00D9FF">Private</span></div>
-      <div class="room-sb-desc" id="roomSbDesc">Room description</div>
+<div id="rv" class="off" style="position:fixed;inset:0;z-index:15;display:flex;">
+  <div class="sb-overlay off" id="rsbOverlay" onclick="closeRsb()"></div>
+  <div class="rsb" id="rsb">
+    <div class="rsb-hd">
+      <button class="back-btn" onclick="backDash()">← Dashboard</button>
+      <div class="room-hero-img" id="rvEmoji">🤖</div>
+      <div class="rsb-name" id="rvName">Room</div>
+      <span class="rsb-badge">Private</span>
+      <div class="rsb-desc" id="rvDesc"></div>
       <div class="room-id-row">
-        <span class="room-id-txt" id="roomIdTxt">#room-id</span>
-        <button class="btn-copy-id" onclick="copyRoomId()" title="Copy Room ID">📋</button>
+        <span class="room-id-txt" id="rvId">#—</span>
+        <button class="btn-cid" onclick="cpyId()" title="Copy ID">📋</button>
       </div>
-      <div class="online-info" id="roomOnlineInfo">● 1 Online</div>
-      <div class="online-avatars" id="roomOnlineAvatars"></div>
+      <div class="on-info" id="rvOnline">● 1 Online</div>
+      <div class="on-avs" id="rvAvs"></div>
     </div>
-    <div class="room-nav">
-      <div class="room-nav-item active" onclick="switchRoomTab('chat',this)">💬 <span>Chat</span></div>
-      <div class="room-nav-item" onclick="switchRoomTab('whiteboard',this)">🖊️ <span>Whiteboard</span></div>
-      <div class="room-nav-item" onclick="switchRoomTab('tasks',this)">✅ <span>Tasks</span></div>
-      <div class="room-nav-item" onclick="switchRoomTab('files',this)">📁 <span>Files</span></div>
-      <div class="room-nav-item" onclick="switchRoomTab('links',this)">🔗 <span>Links</span></div>
-      <div class="room-nav-item" onclick="switchRoomTab('settings',this)">⚙️ <span>Room Settings</span></div>
+    <div class="rnav">
+      <div class="rni on" onclick="rTab('chat',this)">💬 Chat</div>
+      <div class="rni" onclick="rTab('whiteboard',this)">🖊️ Whiteboard</div>
+      <div class="rni" onclick="rTab('tasks',this)">✅ Tasks</div>
+      <div class="rni" onclick="rTab('files',this)">📁 Files</div>
+      <div class="rni" onclick="rTab('links',this)">🔗 Links</div>
+      <div class="rni" onclick="rTab('settings',this)">⚙️ Settings</div>
     </div>
-    <div class="invite-section">
+    <div class="inv-sec">
       <h4>👥 Invite People</h4>
-      <p>Share the link to invite</p>
-      <button class="btn-invite" onclick="generateInvite()">Copy Invite Link</button>
+      <p>Share link to invite</p>
+      <button class="btn-inv" onclick="genInvite()">Copy Invite Link</button>
     </div>
   </div>
 
-  <div class="room-main">
-    <div class="room-topbar">
-      <div class="search-bar" style="max-width:400px"><span class="si">🔍</span><input placeholder="Search in room"/></div>
-      <div class="tb-actions">
-        <button class="btn-icon ghost" title="Start Voice Chat" onclick="toggleVoiceChat()">🎙️</button>
-        <button class="btn-icon ghost">📊</button>
-        <button class="btn-icon ghost">📅</button>
-        <div class="notif-wrap"><button class="btn-icon ghost">🔔</button><span class="notif-dot-r" id="roomNotifDot" style="display:none">!</span></div>
-        <div class="av" id="roomTopAv" style="width:34px;height:34px;font-size:12px"></div>
+  <div class="rmain">
+    <div class="rtopbar">
+      <button class="btn-menu" onclick="openRsb()">☰</button>
+      <div class="srch" style="max-width:360px"><span class="si">🔍</span><input placeholder="Search in room..."/></div>
+      <div class="tb-r">
+        <button class="ib gh" onclick="toggleVoice()" title="Voice Chat">🎙️</button>
+        <button class="ib gh" onclick="toast('Coming soon!','inf')">📊</button>
+        <div class="av" id="rvAv" style="width:32px;height:32px;font-size:11px"></div>
       </div>
     </div>
 
-    <!-- Room tabs bar -->
-    <div class="room-tabs">
-      <div class="room-tab active" id="rtab-chat" onclick="switchRoomTab('chat',this)">💬 Chat</div>
-      <div class="room-tab" id="rtab-whiteboard" onclick="switchRoomTab('whiteboard',this)">🖊️ Whiteboard</div>
-      <div class="room-tab" id="rtab-tasks" onclick="switchRoomTab('tasks',this)">✅ Tasks</div>
-      <div class="room-tab" id="rtab-files" onclick="switchRoomTab('files',this)">📁 Files</div>
-      <div class="room-tab" id="rtab-links" onclick="switchRoomTab('links',this)">🔗 Links</div>
+    <div class="rtabs">
+      <div class="rtab on" id="rt-chat" onclick="rTab('chat',this)">💬 Chat</div>
+      <div class="rtab" id="rt-whiteboard" onclick="rTab('whiteboard',this)">🖊️ Board</div>
+      <div class="rtab" id="rt-tasks" onclick="rTab('tasks',this)">✅ Tasks</div>
+      <div class="rtab" id="rt-files" onclick="rTab('files',this)">📁 Files</div>
+      <div class="rtab" id="rt-links" onclick="rTab('links',this)">🔗 Links</div>
     </div>
 
-    <!-- Voice bar -->
-    <div class="voice-bar hidden" id="voiceBar">
-      <div class="voice-status"><div class="voice-dot"></div>Voice Chat Active</div>
+    <div class="voice-bar" id="vBar">
+      <div class="v-status"><div class="vdot"></div>Voice Active</div>
       <button class="btn-mic on" id="micBtn" onclick="toggleMic()">🎙️ Mute</button>
-      <button class="btn-leave-vc" onclick="leaveVoiceChat()">Leave Voice</button>
+      <button class="btn-lv" onclick="leaveVoice()">Leave Voice</button>
     </div>
 
     <!-- Chat panel -->
-    <div id="panel-chat" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
-      <div class="chat-area" id="chatArea">
-        <!-- messages rendered here -->
-      </div>
-      <div class="chat-input-wrap">
-        <div class="chat-input-row">
-          <input id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"/>
-          <div class="chat-tools">
-            <button class="chat-tool-btn" title="Emoji">😊</button>
-            <button class="chat-tool-btn" title="Attach">📎</button>
-            <button class="chat-tool-btn" title="Mention">@</button>
+    <div id="p-chat" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div class="chat-area" id="chatArea"></div>
+      <div class="chat-inp-wrap">
+        <div class="chat-inp-row">
+          <input id="chatInp" placeholder="Type a message... (@Nexora for AI)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"/>
+          <div style="display:flex;gap:3px">
+            <button class="ct-btn" title="Emoji" onclick="toast('Emoji picker coming soon!','inf')">😊</button>
+            <button class="ct-btn" title="Attach" onclick="toast('File upload coming soon!','inf')">📎</button>
+            <button class="ct-btn" title="Mention" onclick="document.getElementById('chatInp').value+=' @Nexora '">@</button>
           </div>
-          <button class="btn-send" onclick="sendMessage()">➤</button>
+          <button class="send-btn" onclick="sendMsg()">➤</button>
         </div>
       </div>
     </div>
 
     <!-- Whiteboard panel -->
-    <div id="panel-whiteboard" style="display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:var(--muted)">
-      <div style="font-size:48px">🖊️</div>
-      <div style="font-size:16px;font-weight:700;color:#fff">Collaborative Whiteboard</div>
-      <div style="font-size:13px">Coming soon — draw and collaborate in real-time</div>
-    </div>
+    <div id="p-whiteboard" class="ph-panel" style="display:none"><div class="icon">🖊️</div><h3>Whiteboard</h3><p>Collaborative canvas coming soon</p></div>
     <!-- Tasks panel -->
-    <div id="panel-tasks" style="display:none;flex:1;padding:20px;overflow-y:auto"></div>
+    <div id="p-tasks" style="display:none;flex:1;overflow-y:auto;padding:16px"></div>
     <!-- Files panel -->
-    <div id="panel-files" style="display:none;flex:1;padding:20px;overflow-y:auto"></div>
+    <div id="p-files" class="ph-panel" style="display:none"><div class="icon">📁</div><h3>Files</h3><p>File sharing coming soon</p></div>
     <!-- Links panel -->
-    <div id="panel-links" style="display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:var(--muted)">
-      <div style="font-size:48px">🔗</div>
-      <div style="font-size:16px;font-weight:700;color:#fff">Shared Links</div>
-      <div style="font-size:13px">Bookmark important links for the room</div>
+    <div id="p-links" class="ph-panel" style="display:none"><div class="icon">🔗</div><h3>Links</h3><p>Shared links coming soon</p></div>
+    <!-- Settings panel -->
+    <div id="p-settings" style="display:none;flex:1;overflow-y:auto;padding:16px">
+      <div class="card" style="padding:16px;margin-bottom:12px">
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">Room Settings</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div><strong style="font-size:13px">Delete Room</strong><br><small style="color:var(--muted)">This action cannot be undone</small></div>
+          <button style="padding:7px 14px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#fca5a5;font-size:12px;font-weight:700;cursor:pointer" onclick="deleteRoom()">Delete</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Room right panel -->
-  <div class="room-right">
-    <div class="rr-section">
-      <div class="rr-head"><span>Members (<span id="memberCount">1</span>)</span><span class="view-all" style="font-size:12px">View all</span><button class="btn-rr-add" onclick="generateInvite()">+</button></div>
-      <div id="membersList"></div>
+  <div class="rright">
+    <div class="rrs">
+      <div class="rrs-hd"><span>Members (<span id="memCt">1</span>)</span><button class="add-btn" onclick="genInvite()">+</button></div>
+      <div id="memList"></div>
     </div>
-    <div class="rr-section">
-      <div class="rr-head"><span>Tasks (4)</span><span class="view-all" style="font-size:12px">View all</span><button class="btn-rr-add">+</button></div>
-      <div class="task-row"><div class="task-check" onclick="toggleTask(this)"></div><div class="task-info"><strong>Review research papers</strong><small>Alia Khan</small></div><span class="task-prio prio-h">High</span></div>
-      <div class="task-row"><div class="task-check" onclick="toggleTask(this)"></div><div class="task-info"><strong>Prepare dataset</strong><small>Rohan Verma</small></div><span class="task-prio prio-m">Medium</span></div>
-      <div class="task-row"><div class="task-check" onclick="toggleTask(this)"></div><div class="task-info"><strong>Model training</strong><small>Dev Patel</small></div><span class="task-prio prio-h">High</span></div>
-      <div class="task-row"><div class="task-check done" onclick="toggleTask(this)"><span style="font-size:10px;color:#000">✓</span></div><div class="task-info"><strong style="text-decoration:line-through;opacity:.5">Write documentation</strong><small>Sarah Chen</small></div><span class="task-prio prio-l">Low</span></div>
+    <div class="rrs">
+      <div class="rrs-hd"><span>Tasks</span><button class="add-btn" onclick="rTab('tasks',document.getElementById('rt-tasks'))">+</button></div>
+      <div class="task-row"><div class="tchk" onclick="tCheck(this)"></div><div class="ti"><strong>Review research papers</strong><small>Pending</small></div><span class="tpri ph">High</span></div>
+      <div class="task-row"><div class="tchk" onclick="tCheck(this)"></div><div class="ti"><strong>Prepare dataset</strong><small>In progress</small></div><span class="tpri pm">Medium</span></div>
+      <div class="task-row"><div class="tchk done" onclick="tCheck(this)"><span style="font-size:10px;color:#000">✓</span></div><div class="ti"><strong style="text-decoration:line-through;opacity:.5">Write docs</strong><small>Done</small></div><span class="tpri pl">Low</span></div>
     </div>
-    <div class="rr-section">
-      <div class="rr-head"><span>Shared Files</span><span class="view-all" style="font-size:12px">View all</span><button class="btn-rr-add">+</button></div>
-      <div class="file-row"><div class="file-row-ico" style="background:rgba(34,197,94,.12)">📊</div><div class="file-row-info"><strong>Dataset_v2.csv</strong><small>1.2 MB</small></div><button class="btn-dl">⬇</button></div>
-      <div class="file-row"><div class="file-row-ico" style="background:rgba(124,58,237,.12)">🖼️</div><div class="file-row-info"><strong>Model_Architecture.png</strong><small>3.4 MB</small></div><button class="btn-dl">⬇</button></div>
-      <div class="file-row"><div class="file-row-ico" style="background:rgba(0,217,255,.12)">📈</div><div class="file-row-info"><strong>Training_Results.xlsx</strong><small>2.1 MB</small></div><button class="btn-dl">⬇</button></div>
+    <div class="rrs">
+      <div class="rrs-hd"><span>Shared Files</span><button class="add-btn" onclick="toast('Upload coming soon!','inf')">+</button></div>
+      <div class="file-row"><div class="fic" style="background:rgba(34,197,94,.1)">📊</div><div class="fi"><strong>Dataset_v2.csv</strong><small>1.2 MB</small></div><button class="dl-btn" onclick="toast('Download coming soon!','inf')">⬇</button></div>
+      <div class="file-row"><div class="fic" style="background:rgba(124,58,237,.1)">🖼️</div><div class="fi"><strong>Architecture.png</strong><small>3.4 MB</small></div><button class="dl-btn" onclick="toast('Download coming soon!','inf')">⬇</button></div>
     </div>
-    <div class="rr-section">
-      <div class="rr-head"><span>Quick Notes</span><button class="btn-rr-add">✏️</button></div>
-      <div class="notes-box">
-        <h5>📌 Next steps:</h5>
-        <div class="notes-content"><ul><li>Fine-tune the model</li><li>Evaluate performance</li></ul></div>
-      </div>
+    <div class="rrs">
+      <div class="rrs-hd"><span>Quick Notes</span></div>
+      <div class="notes-bx"><h5>📌 Next steps:</h5><div><ul><li>Fine-tune the model</li><li>Evaluate performance</li></ul></div></div>
     </div>
   </div>
 </div>
 
 <!-- ══ MODALS ══ -->
 <!-- Create Room -->
-<div class="modal-overlay hidden" id="modal-createRoom">
+<div class="ovl off" id="m-createRoom">
   <div class="modal">
     <h2>Create Private Room</h2>
-    <p>Your room will be private. Only invited members can join.</p>
-    <div class="msg-box" id="createErr"></div>
-    <input class="tag-inp" id="roomNameInp" placeholder="Room name (e.g. AI Research Team)"/>
-    <input class="tag-inp" id="roomDescInp" placeholder="Description (optional)"/>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Choose an icon:</div>
-    <div class="emoji-grid" id="emojiGrid">
-      🤖 💻 🎨 🚀 🔬 📊 🎯 🏗️ 💡 🌐 🔐 ⚡
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal('createRoom')">Cancel</button>
-      <button class="btn-confirm" onclick="createRoom()">Create Room</button>
+    <p>Only invited members can join.</p>
+    <div class="alert" id="crErr"></div>
+    <input class="tag-inp" id="crName" placeholder="Room name *" maxlength="60"/>
+    <input class="tag-inp" id="crDesc" placeholder="Description (optional)" maxlength="120"/>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Choose an icon:</div>
+    <div class="emoji-grid" id="emojiGrid"></div>
+    <div class="m-acts">
+      <button class="m-acts button btn-cancel" onclick="closeM('createRoom')">Cancel</button>
+      <button class="btn-ok" id="crBtn" onclick="createRoom()">Create Room</button>
     </div>
   </div>
 </div>
 
-<!-- Invite Link -->
-<div class="modal-overlay hidden" id="modal-invite">
+<!-- Invite -->
+<div class="ovl off" id="m-invite">
   <div class="modal">
     <h2>🔗 Invite Link</h2>
-    <p>Share this link. It expires in <strong>1 hour</strong>.</p>
-    <div class="invite-box">
-      <div class="invite-url" id="inviteUrl">Generating...</div>
-      <div class="invite-meta" id="inviteMeta">Valid for 60 minutes</div>
+    <p>Share this link. It expires in <strong>1 hour</strong> and cannot be reused.</p>
+    <div class="inv-box">
+      <div class="inv-url" id="invUrl">Generating...</div>
+      <div class="inv-meta" id="invMeta">Valid for 60 minutes</div>
     </div>
-    <div style="display:flex;gap:10px;margin-bottom:16px">
-      <button class="btn-copy" onclick="copyInviteLink()" style="flex:1">📋 Copy Link</button>
-      <button class="btn-copy" onclick="regenerateInvite()" style="flex:1;background:rgba(79,70,229,.15);color:#a78bfa;border-color:rgba(79,70,229,.3)">🔄 New Link</button>
+    <div class="inv-btns">
+      <button class="btn-cp" onclick="cpyInv()">📋 Copy Link</button>
+      <button class="btn-cp" style="background:rgba(79,70,229,.14);color:#a78bfa" onclick="genInvite()">🔄 New Link</button>
     </div>
-    <div style="background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.2);border-radius:8px;padding:10px;font-size:12px;color:#eab308">
-      ⚠️ This link expires after 1 hour. After expiry, generate a new link.
-    </div>
-    <div class="modal-actions" style="margin-top:16px">
-      <button class="btn-confirm" onclick="closeModal('invite')">Done</button>
-    </div>
+    <div class="warn-box">⚠️ After 1 hour this link expires permanently. Generate a new link to invite again.</div>
+    <div class="m-acts"><button class="btn-ok" onclick="closeM('invite')">Done</button></div>
   </div>
 </div>
 
-<!-- Expired invite -->
-<div class="modal-overlay hidden" id="modal-expired">
+<!-- Expired -->
+<div class="ovl off" id="m-expired">
   <div class="modal" style="text-align:center">
-    <div style="font-size:48px;margin-bottom:12px">⏰</div>
-    <h2>Invite Link Expired</h2>
-    <p>This invite link has expired or is invalid. Ask the room owner to generate a new invite link.</p>
-    <div class="modal-actions"><button class="btn-confirm" onclick="closeModal('expired');goToAuth()">Go to Login</button></div>
+    <div style="font-size:46px;margin-bottom:11px">⏰</div>
+    <h2>Link Expired</h2>
+    <p>This invite link has expired. Ask the room owner to generate a new one.</p>
+    <div class="m-acts"><button class="btn-ok" onclick="closeM('expired');goAuth()">Go to Login</button></div>
   </div>
 </div>
 
-<!-- Firebase + Full Logic -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import {
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signInWithPopup, GoogleAuthProvider, signOut, sendPasswordResetEmail, updateProfile,
-  setPersistence, browserLocalPersistence
-} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-import {
-  getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
-  onSnapshot, query, orderBy, where, updateDoc, serverTimestamp, deleteDoc, Timestamp
-} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
-
-// ── Config ──
-const firebaseConfig = {
-  apiKey:"AIzaSyCCs7KTPZglhh4TaH8_UYmA_Asnc6n9IyM",
-  authDomain:"nexora-studio-62bb9.firebaseapp.com",
-  projectId:"nexora-studio-62bb9",
-  storageBucket:"nexora-studio-62bb9.firebasestorage.app",
-  messagingSenderId:"460500770621",
-  appId:"1:460500770621:web:b95ca97bdbe1ee8b076f54"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const gProvider = new GoogleAuthProvider();
-await setPersistence(auth, browserLocalPersistence);
-
-// ── State ──
-let currentUser = null;
-let currentRoom = null;
-let myRooms = [];
-let chatUnsubscribe = null;
-let membersUnsubscribe = null;
-let selectedEmoji = '🤖';
-let currentInviteUrl = '';
-let pendingInviteCode = null;
-let pendingRoomId = null;
-let voiceActive = false;
-let micMuted = false;
-let peerConnections = {};
-let localStream = null;
-
-// ── Helpers ──
-const $ = id => document.getElementById(id);
-function toast(msg, type='info'){
-  const d = document.createElement('div');
-  d.className = `toast ${type}`;
-  d.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span> ${msg}`;
-  $('toastWrap').appendChild(d);
-  setTimeout(()=>d.remove(), 3500);
-}
-function showMsg(id, msg, type='error'){
-  const el=$(id);
-  el.className=`msg-box show ${type}`;
-  el.textContent=msg;
-}
-function hideMsg(id){$(id).classList.remove('show');}
-function setLoading(btnId, on, txt){
-  const b=$(btnId);
-  b.disabled=on;
-  b.innerHTML=on?`<span class="loader"></span>`:txt;
-}
-function getInitials(name,email){
-  if(name?.trim()) return name.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  return (email||'U')[0].toUpperCase();
-}
-function fmtTime(ts){
-  if(!ts) return '';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-}
-function friendlyErr(code){
-  const m={'auth/user-not-found':'No account found with this email.','auth/wrong-password':'Incorrect password.',
-    'auth/invalid-email':'Invalid email address.','auth/email-already-in-use':'Email already in use.',
-    'auth/weak-password':'Password must be at least 6 characters.','auth/too-many-requests':'Too many attempts. Try again later.',
-    'auth/network-request-failed':'Network error. Check your connection.','auth/popup-closed-by-user':'Popup closed.',
-    'auth/invalid-credential':'Invalid email or password.'};
-  return m[code]||'Something went wrong. Please try again.';
-}
-function genCode(len=12){
-  return Array.from(crypto.getRandomValues(new Uint8Array(len))).map(b=>b.toString(36)).join('').slice(0,len);
-}
-
-// ── Screen management ──
-function showScreen(name){
-  ['splash','auth'].forEach(s=>{
-    $(s).classList.toggle('hidden', s!==name);
-  });
-  ['dashboard','roomView'].forEach(s=>{
-    $(s).classList.toggle('hidden', s!==name);
-  });
-}
-window.showScreen=showScreen;
-window.goToAuth=()=>{
-  $('splash').style.opacity='0';$('splash').style.transform='scale(1.03)';
-  setTimeout(()=>showScreen('auth'),500);
-};
-
-// ── Auth state ──
-onAuthStateChanged(auth, async user=>{
-  if(user){
-    currentUser=user;
-    renderUserUI(user);
-    // Check if there's a pending invite
-    if(pendingInviteCode&&pendingRoomId){
-      await handlePendingInvite();
-    } else {
-      showScreen('dashboard');
-      await loadMyRooms();
-    }
-  } else {
-    currentUser=null;
-    if(pendingInviteCode) showJoinScreen();
-    else showScreen('auth');
-  }
-});
-
-function renderUserUI(user){
-  const name = user.displayName||user.email.split('@')[0];
-  const init = getInitials(user.displayName,user.email);
-  $('sbAv').innerHTML=`<span style="position:relative;z-index:1">${init}</span><div class="online-dot"></div>`;
-  $('topAv').textContent=init;
-  $('roomTopAv').textContent=init;
-  $('sbName').textContent=name;
-  $('sbEmail').textContent=user.email;
-  $('topName').textContent=name;
-  $('welcomeMsg').textContent=`Welcome back, ${name.split(' ')[0]}! 👋`;
-}
-
-// ── Tab switching ──
-let currentTab='login';
-window.switchTab=tab=>{
-  currentTab=tab;
-  hideMsg('authErr');hideMsg('authOk');
-  if(tab==='login'){
-    $('tabLogin').classList.add('active');$('tabReg').classList.remove('active');
-    $('nameWrap').style.display='none';$('forgotWrap').style.display='block';
-    $('authBtn').textContent='Sign In';$('authTitle').textContent='Welcome back';
-    $('authSub').textContent='Sign in to Nexora Studio';
-    $('authFootTxt').textContent="Don't have an account?";
-    $('authFootLink').textContent=' Sign Up';$('authFootLink').onclick=()=>switchTab('register');
-  } else {
-    $('tabReg').classList.add('active');$('tabLogin').classList.remove('active');
-    $('nameWrap').style.display='block';$('forgotWrap').style.display='none';
-    $('authBtn').textContent='Create Account';$('authTitle').textContent='Create account';
-    $('authSub').textContent='Join Nexora Studio today';
-    $('authFootTxt').textContent='Already have an account?';
-    $('authFootLink').textContent=' Sign In';$('authFootLink').onclick=()=>switchTab('login');
-  }
-};
-
-// ── Auth handlers ──
-window.handleAuth=async()=>{
-  const email=$('emailInp').value.trim();
-  const pass=$('passInp').value;
-  const name=$('nameInp').value.trim();
-  hideMsg('authErr');hideMsg('authOk');
-  if(!email||!pass){showMsg('authErr','Please fill all fields.');return;}
-  if(currentTab==='register'&&!name){showMsg('authErr','Please enter your name.');return;}
-  setLoading('authBtn',true,currentTab==='login'?'Sign In':'Create Account');
-  try{
-    if(currentTab==='login'){
-      await signInWithEmailAndPassword(auth,email,pass);
-    } else {
-      const c=await createUserWithEmailAndPassword(auth,email,pass);
-      await updateProfile(c.user,{displayName:name});
-      await setDoc(doc(db,'users',c.user.uid),{uid:c.user.uid,name,email,createdAt:serverTimestamp()});
-    }
-  } catch(e){showMsg('authErr',friendlyErr(e.code));}
-  setLoading('authBtn',false,currentTab==='login'?'Sign In':'Create Account');
-};
-window.handleGoogle=async()=>{
-  hideMsg('authErr');
-  try{ await signInWithPopup(auth,gProvider); }
-  catch(e){ if(e.code!=='auth/cancelled-popup-request') showMsg('authErr',friendlyErr(e.code)); }
-};
-window.handleForgot=async()=>{
-  const email=$('emailInp').value.trim();
-  if(!email){showMsg('authErr','Enter your email first.');return;}
-  try{await sendPasswordResetEmail(auth,email);showMsg('authOk','Reset email sent! Check your inbox.','success');}
-  catch(e){showMsg('authErr',friendlyErr(e.code));}
-};
-window.handleLogout=async()=>{ await signOut(auth); myRooms=[];showScreen('auth'); };
-
-// ── Rooms ──
-async function loadMyRooms(){
-  const uid=currentUser.uid;
-  // Rooms where user is owner
-  const q1=query(collection(db,'rooms'),where('ownerId','==',uid));
-  // Rooms where user is member
-  const q2=query(collection(db,'rooms'),where('members','array-contains',uid));
-  onSnapshot(q1,snap=>{
-    myRooms=[];
-    snap.forEach(d=>{ if(!myRooms.find(r=>r.id===d.id)) myRooms.push({id:d.id,...d.data()}); });
-    renderMyRooms();
-    $('statRooms').textContent=myRooms.length;
-  });
-  onSnapshot(q2,snap=>{
-    snap.forEach(d=>{ if(!myRooms.find(r=>r.id===d.id)) myRooms.push({id:d.id,...d.data()}); });
-    renderMyRooms();
-  });
-}
-
-function renderMyRooms(){
-  const el=$('myRoomsList');
-  if(!myRooms.length){
-    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">No rooms yet. Create your first private room! 🚀</div>';
-    return;
-  }
-  el.innerHTML=myRooms.map(r=>`
-    <div class="room-row" onclick="openRoom('${r.id}')">
-      <div class="room-row-ico" style="background:rgba(0,217,255,.1);border:1px solid rgba(0,217,255,.15)">${r.emoji||'🤖'}</div>
-      <div class="room-row-info">
-        <strong>${r.name}</strong>
-        <small>${r.desc||'Private room'}</small>
+<!-- Profile -->
+<div class="ovl off" id="m-profile">
+  <div class="modal">
+    <h2>👤 My Profile</h2>
+    <p id="pEmail" style="color:var(--muted);font-size:13px;margin-bottom:16px"></p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px">Display Name</span>
+        <span id="pName" style="font-size:13px;color:var(--muted)"></span>
       </div>
-      <div class="room-row-meta">
-        <span class="badge-priv">Private</span>
-        <span class="online-count">● ${r.onlineCount||1} Online</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px">Account Type</span>
+        <span class="svip">⭐ SVIP</span>
       </div>
     </div>
-  `).join('');
-}
-window.openRoom=async(roomId)=>{
-  const snap=await getDoc(doc(db,'rooms',roomId));
-  if(!snap.exists()){toast('Room not found','error');return;}
-  const rd={id:roomId,...snap.data()};
-  // Security: check membership
-  if(rd.ownerId!==currentUser.uid && !rd.members?.includes(currentUser.uid)){
-    toast('Access denied: You are not a member of this room','error');return;
-  }
-  currentRoom=rd;
-  renderRoomView(rd);
-  showScreen('roomView');
-  subscribeToChat(roomId);
-  subscribeToMembers(roomId);
-};
-window.backToDashboard=()=>{
-  if(chatUnsubscribe) chatUnsubscribe();
-  if(membersUnsubscribe) membersUnsubscribe();
-  if(voiceActive) leaveVoiceChat();
-  currentRoom=null;
-  showScreen('dashboard');
-};
+    <div class="m-acts">
+      <button class="btn-cancel" onclick="closeM('profile')">Close</button>
+      <button class="btn-ok" onclick="doLogout();closeM('profile')">Sign Out</button>
+    </div>
+  </div>
+</div>
 
-function renderRoomView(r){
-  $('roomHeroEmoji').textContent=r.emoji||'🤖';
-  $('roomSbName').innerHTML=`${r.name} <span style="font-size:11px;font-weight:500;padding:2px 7px;border-radius:99px;background:rgba(0,217,255,.12);color:#00D9FF">Private</span>`;
-  $('roomSbDesc').textContent=r.desc||'A collaborative private space';
-  $('roomIdTxt').textContent=`#${r.id.slice(0,8)}`;
-  // topbar
-  document.querySelector('.room-name-hd')||null;
-}
-window.copyRoomId=()=>{
-  navigator.clipboard.writeText(currentRoom?.id||'').then(()=>toast('Room ID copied!','success'));
-};
-
-// ── Create Room ──
-window.createRoom=async()=>{
-  const name=$('roomNameInp').value.trim();
-  const desc=$('roomDescInp').value.trim();
-  if(!name){showMsg('createErr','Please enter a room name.');return;}
-  setLoading('modal-createRoom > .modal > .modal-actions > .btn-confirm',true,'Create Room');
-  try{
-    const roomRef=await addDoc(collection(db,'rooms'),{
-      name, desc, emoji:selectedEmoji,
-      ownerId:currentUser.uid,
-      ownerName:currentUser.displayName||currentUser.email,
-      members:[currentUser.uid],
-      createdAt:serverTimestamp(),
-      onlineCount:1,
-    });
-    // Add AI bot as system member info
-    await setDoc(doc(db,'rooms',roomRef.id,'members',currentUser.uid),{
-      uid:currentUser.uid,
-      name:currentUser.displayName||currentUser.email.split('@')[0],
-      email:currentUser.email,
-      role:'owner',
-      joinedAt:serverTimestamp(),
-    });
-    // Welcome AI message
-    await addDoc(collection(db,'rooms',roomRef.id,'messages'),{
-      senderId:'ai-nexora',
-      senderName:'Nexora AI',
-      text:`Welcome to **${name}**! 🎉 I'm your AI assistant. I can help you with research, code, ideas, and more. Just mention @Nexora or ask me anything!`,
-      type:'ai',
-      timestamp:serverTimestamp(),
-    });
-    toast('Room created!','success');
-    closeModal('createRoom');
-    $('roomNameInp').value='';$('roomDescInp').value='';
-    await openRoom(roomRef.id);
-  } catch(e){showMsg('createErr','Error creating room: '+e.message);}
-};
-
-// Emoji selector
-document.addEventListener('DOMContentLoaded',()=>{});
-setTimeout(()=>{
-  const grid=$('emojiGrid');
-  if(!grid) return;
-  const emojis=['🤖','💻','🎨','🚀','🔬','📊','🎯','🏗️','💡','🌐','🔐','⚡'];
-  grid.innerHTML=emojis.map(e=>`<div class="emoji-opt${e==='🤖'?' sel':''}" onclick="selectEmoji(this,'${e}')">${e}</div>`).join('');
-},100);
-window.selectEmoji=(el,e)=>{
-  document.querySelectorAll('.emoji-opt').forEach(o=>o.classList.remove('sel'));
-  el.classList.add('sel');selectedEmoji=e;
-};
-
-// ── Invite System ──
-window.generateInvite=async()=>{
-  if(!currentRoom){toast('No room selected','error');return;}
-  openModal('invite');
-  $('inviteUrl').textContent='Generating...';
-  $('inviteMeta').textContent='Please wait...';
-  try{
-    const code=genCode(16);
-    const expiresAt=new Date(Date.now()+60*60*1000); // 1 hour
-    await setDoc(doc(db,'invites',code),{
-      roomId:currentRoom.id,
-      roomName:currentRoom.name,
-      inviteCode:code,
-      createdBy:currentUser.uid,
-      createdAt:serverTimestamp(),
-      expiresAt:Timestamp.fromDate(expiresAt),
-      status:'active',
-    });
-    const url=`${location.origin}${location.pathname}?invite=${code}&room=${currentRoom.id}`;
-    currentInviteUrl=url;
-    $('inviteUrl').textContent=url;
-    $('inviteMeta').textContent=`Expires at ${expiresAt.toLocaleTimeString()} · 1 hour only`;
-  } catch(e){ $('inviteUrl').textContent='Error generating link'; toast('Error: '+e.message,'error'); }
-};
-window.regenerateInvite=generateInvite;
-window.copyInviteLink=()=>{
-  navigator.clipboard.writeText(currentInviteUrl).then(()=>toast('Invite link copied!','success'));
-};
-
-// ── Check URL for invite ──
-(async()=>{
-  const params=new URLSearchParams(location.search);
-  const inv=params.get('invite');
-  const rid=params.get('room');
-  if(inv&&rid){
-    pendingInviteCode=inv;
-    pendingRoomId=rid;
-  }
-})();
-
-async function handlePendingInvite(){
-  if(!currentUser){showJoinScreen();return;}
-  await processInvite(pendingInviteCode,pendingRoomId);
-}
-
-function showJoinScreen(){
-  $('joinScreen').classList.remove('hidden');
-  checkInviteValidity();
-}
-window.cancelJoin=()=>{
-  $('joinScreen').classList.add('hidden');
-  pendingInviteCode=null;pendingRoomId=null;
-  history.replaceState({},'',location.pathname);
-  showScreen('auth');
-};
-
-async function checkInviteValidity(){
-  if(!pendingInviteCode) return;
-  try{
-    const snap=await getDoc(doc(db,'invites',pendingInviteCode));
-    if(!snap.exists()){
-      $('joinRoomName').textContent='Invalid Invite';
-      showMsg('joinMsgBox','This invite link does not exist.','error');
-      $('joinBtn').disabled=true;return;
-    }
-    const inv=snap.data();
-    const now=new Date();
-    const exp=inv.expiresAt.toDate();
-    if(inv.status==='expired'||now>exp){
-      // Mark as expired
-      await updateDoc(doc(db,'invites',pendingInviteCode),{status:'expired'});
-      $('joinRoomName').textContent='⏰ Link Expired';
-      showMsg('joinMsgBox','This invite link has expired. Ask the room owner for a new one.','error');
-      $('joinBtn').disabled=true;
-      $('joinTimer').style.display='none';
-      return;
-    }
-    // Valid
-    const roomSnap=await getDoc(doc(db,'rooms',inv.roomId));
-    const rn=roomSnap.exists()?roomSnap.data().name:'Private Room';
-    $('joinRoomName').textContent=`You're invited to ${rn}!`;
-    $('joinRoomLabel').textContent=rn;
-    $('joinInfo').style.display='block';
-    // Countdown
-    const ms=exp-now;
-    const mins=Math.floor(ms/60000);
-    const secs=Math.floor((ms%60000)/1000);
-    $('joinRoomMeta').textContent=`Expires in ${mins}m ${secs}s`;
-    $('joinTimer').style.display='inline-flex';
-    $('joinTimerTxt').textContent=`${mins}m ${secs}s remaining`;
-    // Live countdown
-    const iv=setInterval(async()=>{
-      const rem=exp-new Date();
-      if(rem<=0){clearInterval(iv);$('joinTimerTxt').textContent='Expired';$('joinBtn').disabled=true;return;}
-      const m=Math.floor(rem/60000),s=Math.floor((rem%60000)/1000);
-      $('joinTimerTxt').textContent=`${m}m ${s}s remaining`;
-      $('joinRoomMeta').textContent=`Expires in ${m}m ${s}s`;
-    },1000);
-  } catch(e){ showMsg('joinMsgBox','Error checking invite: '+e.message,'error'); }
-}
-
-window.handleJoinRoom=async()=>{
-  if(!currentUser){
-    // Redirect to auth, keep invite params
-    showScreen('auth');$('joinScreen').classList.add('hidden');
-    showMsg('authOk','Please sign in to join the room.','info');
-    return;
-  }
-  setLoading('joinBtn',true,'Join Room');
-  try{
-    const snap=await getDoc(doc(db,'invites',pendingInviteCode));
-    if(!snap.exists()) throw new Error('Invite not found');
-    const inv=snap.data();
-    const now=new Date();
-    const exp=inv.expiresAt.toDate();
-    // Server-side validation
-    if(inv.status==='expired'||now>exp){
-      await updateDoc(doc(db,'invites',pendingInviteCode),{status:'expired'});
-      openModal('expired');setLoading('joinBtn',false,'Join Room');return;
-    }
-    // Add user to room
-    const roomRef=doc(db,'rooms',inv.roomId);
-    const roomSnap=await getDoc(roomRef);
-    if(!roomSnap.exists()) throw new Error('Room not found');
-    const rd=roomSnap.data();
-    if(!rd.members?.includes(currentUser.uid)){
-      await updateDoc(roomRef,{members:[...(rd.members||[]),currentUser.uid]});
-      await setDoc(doc(db,'rooms',inv.roomId,'members',currentUser.uid),{
-        uid:currentUser.uid,
-        name:currentUser.displayName||currentUser.email.split('@')[0],
-        email:currentUser.email,
-        role:'member',
-        joinedAt:serverTimestamp(),
-      });
-      // System message
-      await addDoc(collection(db,'rooms',inv.roomId,'messages'),{
-        senderId:'system',senderName:'System',
-        text:`${currentUser.displayName||'New member'} joined the room.`,
-        type:'system',timestamp:serverTimestamp(),
-      });
-    }
-    // Clear params
-    history.replaceState({},'',location.pathname);
-    $('joinScreen').classList.add('hidden');
-    pendingRoomId=inv.roomId;pendingInviteCode=null;
-    toast('Joined room successfully!','success');
-    await loadMyRooms();
-    await openRoom(inv.roomId);
-    showScreen('roomView');
-  } catch(e){ showMsg('joinMsgBox','Error: '+e.message,'error'); }
-  setLoading('joinBtn',false,'Join Room');
-};
-
-// ── Chat ──
-function subscribeToChat(roomId){
-  if(chatUnsubscribe) chatUnsubscribe();
-  const q=query(collection(db,'rooms',roomId,'messages'),orderBy('timestamp','asc'));
-  chatUnsubscribe=onSnapshot(q,snap=>{
-    const area=$('chatArea');
-    area.innerHTML='';
-    snap.forEach(d=>appendMessage({id:d.id,...d.data()}));
-    area.scrollTop=area.scrollHeight;
-    $('statMsgs').textContent=snap.size;
-  });
-}
-
-function appendMessage(msg){
-  const area=$('chatArea');
-  const isOwn=msg.senderId===currentUser?.uid;
-  const isAI=msg.type==='ai'||msg.senderId==='ai-nexora';
-  const isSys=msg.type==='system';
-  if(isSys){
-    const d=document.createElement('div');
-    d.style.cssText='text-align:center;color:var(--muted);font-size:12px;padding:8px;margin:4px 0';
-    d.textContent=msg.text;
-    area.appendChild(d);return;
-  }
-  const init=isAI?'AI':getInitials(msg.senderName,msg.senderName);
-  const avColor=isAI?'background:linear-gradient(135deg,#4F46E5,#7C3AED)':
-    isOwn?'background:linear-gradient(135deg,#00D9FF,#4F46E5)':'background:linear-gradient(135deg,#7C3AED,#EC4899)';
-  const bubble=isAI?'ai':isOwn?'own':'';
-  const d=document.createElement('div');
-  d.className='msg-group';
-  d.innerHTML=`
-    <div class="msg-row${isAI?' bot':''}">
-      <div class="msg-av" style="${avColor}">${init}</div>
-      <div class="msg-content">
-        <div class="msg-header">
-          <span class="msg-name">${msg.senderName||'Unknown'}</span>
-          ${isAI?'<span class="bot-tag">BOT</span>':''}
-          ${isOwn&&!isAI?'<span class="svip-tag">SVIP</span>':''}
-          <span class="msg-time-sm">${fmtTime(msg.timestamp)}</span>
-        </div>
-        <div class="msg-bubble ${bubble}">${formatMsgText(msg.text)}</div>
-      </div>
-    </div>`;
-  area.appendChild(d);
-}
-
-function formatMsgText(t){
-  if(!t) return '';
-  return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-}
-
-window.sendMessage=async()=>{
-  const inp=$('chatInput');
-  const text=inp.value.trim();
-  if(!text||!currentRoom||!currentUser) return;
-  inp.value='';
-  const isAiMention=text.toLowerCase().includes('@nexora')||text.toLowerCase().startsWith('/ai');
-  try{
-    await addDoc(collection(db,'rooms',currentRoom.id,'messages'),{
-      senderId:currentUser.uid,
-      senderName:currentUser.displayName||currentUser.email.split('@')[0],
-      text,type:'user',timestamp:serverTimestamp(),
-    });
-    if(isAiMention) await callAI(text,currentRoom.id);
-  } catch(e){ toast('Failed to send message','error'); }
-};
-
-// ── AI Assistant ──
-async function callAI(userMsg, roomId){
-  // Fetch last 10 messages for context
-  const q=query(collection(db,'rooms',roomId,'messages'),orderBy('timestamp','desc'));
-  const snap=await getDocs(q);
-  const history=[];
-  snap.forEach(d=>{
-    const m=d.data();
-    if(m.type!=='system'&&history.length<10){
-      history.unshift({role:m.senderId==='ai-nexora'?'assistant':'user',content:m.text});
-    }
-  });
-  // Typing indicator
-  const typingRef=await addDoc(collection(db,'rooms',roomId,'messages'),{
-    senderId:'ai-nexora',senderName:'Nexora AI',
-    text:'✦ Thinking...',type:'ai',timestamp:serverTimestamp(),
-  });
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',max_tokens:1000,
-        system:`You are Nexora AI, a helpful assistant inside the private room "${currentRoom?.name}". 
-Keep responses concise and helpful. You can see this room's chat history.
-Format responses with **bold** for emphasis when needed.`,
-        messages:history.slice(-8),
-      }),
-    });
-    const data=await res.json();
-    const reply=data.content?.[0]?.text||'I could not generate a response.';
-    await updateDoc(typingRef,{text:reply});
-  } catch(e){
-    await updateDoc(typingRef,{text:'I encountered an error. Please try again.'});
-  }
-}
-
-// ── Members ──
-function subscribeToMembers(roomId){
-  if(membersUnsubscribe) membersUnsubscribe();
-  membersUnsubscribe=onSnapshot(collection(db,'rooms',roomId,'members'),snap=>{
-    const members=[];
-    snap.forEach(d=>members.push(d.data()));
-    renderMembers(members);
-    $('memberCount').textContent=members.length;
-    $('statMembers').textContent=members.length;
-    renderOnlineAvatars(members);
-    $('roomOnlineInfo').textContent=`● ${members.length} Online`;
-  });
-}
-function renderMembers(members){
-  $('membersList').innerHTML=members.map(m=>`
-    <div class="member-row">
-      <div class="av" style="width:32px;height:32px;font-size:11px;background:linear-gradient(135deg,#00D9FF,#4F46E5)">
-        ${getInitials(m.name,m.email)}
-      </div>
-      <div class="member-info">
-        <strong>${m.name||m.email}</strong>
-      </div>
-      <span class="member-role ${m.role==='owner'?'role-owner':m.role==='moderator'?'role-mod':'role-online'}">
-        ${m.role==='owner'?'Room Owner':m.role==='moderator'?'Moderator':'Online'}
-      </span>
-    </div>`).join('');
-}
-function renderOnlineAvatars(members){
-  const el=$('roomOnlineAvatars');
-  el.innerHTML=members.slice(0,5).map(m=>`
-    <div class="online-av" style="background:linear-gradient(135deg,#00D9FF,#4F46E5);font-size:10px;font-weight:700;color:#fff">
-      ${getInitials(m.name,m.email)}
-    </div>`).join('');
-  if(members.length>5) el.innerHTML+=`<div class="online-av" style="background:rgba(255,255,255,.1);font-size:9px;color:#9ca3af">+${members.length-5}</div>`;
-}
-
-// ── Voice Chat (WebRTC) ──
-window.toggleVoiceChat=async()=>{
-  if(voiceActive){leaveVoiceChat();return;}
-  try{
-    localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
-    voiceActive=true;
-    $('voiceBar').classList.remove('hidden');
-    $('micBtn').className='btn-mic on';$('micBtn').textContent='🎙️ Mute';
-    toast('Voice chat started. Mic is active.','success');
-  } catch(e){ toast('Microphone access denied','error'); }
-};
-window.toggleMic=()=>{
-  if(!localStream) return;
-  micMuted=!micMuted;
-  localStream.getAudioTracks().forEach(t=>{t.enabled=!micMuted;});
-  $('micBtn').className=`btn-mic ${micMuted?'off':'on'}`;
-  $('micBtn').textContent=micMuted?'🔇 Unmute':'🎙️ Mute';
-  toast(micMuted?'Microphone muted':'Microphone unmuted','info');
-};
-window.leaveVoiceChat=()=>{
-  if(localStream) localStream.getTracks().forEach(t=>t.stop());
-  localStream=null;voiceActive=false;micMuted=false;
-  Object.values(peerConnections).forEach(pc=>pc.close());
-  peerConnections={};
-  $('voiceBar').classList.add('hidden');
-  toast('Left voice chat','info');
-};
-
-// ── Room tabs ──
-window.switchRoomTab=(tab,el)=>{
-  ['chat','whiteboard','tasks','files','links'].forEach(t=>{
-    const p=$('panel-'+t);
-    if(p) p.style.display=t===tab?(t==='chat'?'flex':'block'):'none';
-    const rt=$('rtab-'+t);
-    if(rt) rt.classList.toggle('active',t===tab);
-  });
-  document.querySelectorAll('.room-nav-item').forEach(i=>i.classList.remove('active'));
-  if(el) el.classList.add('active');
-};
-
-// ── Dashboard nav ──
-window.setNav=(el,section)=>{
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  el.classList.add('active');
-};
-window.toggleSidebar=()=>{
-  const sb=$('sidebar');
-  sb.classList.toggle('collapsed');
-  $('upgradeCard').style.display=sb.classList.contains('collapsed')?'none':'block';
-};
-
-// ── Modals ──
-window.openModal=id=>{ $('modal-'+id).classList.remove('hidden'); };
-window.closeModal=id=>{ $('modal-'+id).classList.add('hidden'); };
-// Close on overlay click
-document.querySelectorAll('.modal-overlay').forEach(o=>{
-  o.addEventListener('click',e=>{ if(e.target===o) o.classList.add('hidden'); });
-});
-
-// ── Tasks ──
-window.toggleTask=el=>{
-  el.classList.toggle('done');
-  if(el.classList.contains('done')) el.innerHTML='<span style="font-size:10px;color:#000">✓</span>';
-  else el.innerHTML='';
-};
-
-// ── Particles ──
-const canvas=$('particles');
-const ctx=canvas.getContext('2d');
-canvas.width=window.innerWidth;canvas.height=window.innerHeight;
-window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
-const pts=Array.from({length:65},()=>({
-  x:Math.random()*canvas.width,y:Math.random()*canvas.height,
-  vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,
-  r:Math.random()*1.8+.4,a:Math.random()*.35+.08
-}));
-(function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  pts.forEach(p=>{
-    p.x+=p.vx;p.y+=p.vy;
-    if(p.x<0||p.x>canvas.width)p.vx*=-1;
-    if(p.y<0||p.y>canvas.height)p.vy*=-1;
-    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    ctx.fillStyle=`rgba(0,217,255,${p.a})`;ctx.fill();
-  });
-  pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{
-    const d=Math.hypot(a.x-b.x,a.y-b.y);
-    if(d<100){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
-      ctx.strokeStyle=`rgba(0,217,255,${.06*(1-d/100)})`;ctx.lineWidth=.5;ctx.stroke();}
-  }));
-  requestAnimationFrame(draw);
-})();
-</script>
+<!-- App logic, split into ES modules under js/ (entry point: app.js) -->
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
