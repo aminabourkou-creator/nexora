@@ -7,6 +7,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>Nexora Studio</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B0A08">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nexora">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -557,6 +565,7 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       <button class="btn-menu" id="menuBtn" onclick="openSb()">☰</button>
       <div class="srch"><span class="si">🔍</span><input placeholder="Search rooms..." id="srchInp" oninput="doSearch(this.value)"/></div>
       <div class="tbr">
+        <button class="ib gh" id="installBtn" style="display:none;align-items:center;gap:5px;width:auto;padding:0 12px;font-size:12px" onclick="installApp()" title="Install app">⬇ Install</button>
         <button class="ib pri" onclick="openM('createRoom')" title="New Room">+</button>
         <div class="nb"><button class="ib gh" onclick="toast('No new notifications','inf')">🔔</button></div>
         <div class="av" id="topAv" style="width:32px;height:32px;font-size:11px;cursor:pointer" onclick="openM('profile')"></div>
@@ -804,6 +813,33 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 // ── INIT ──
+
+// Register service worker so the browser treats this as an installable
+// PWA (required before wrapping it into a real .apk with PWABuilder/Bubblewrap).
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(e){
+      console.warn('Service worker registration failed:',e);
+    });
+  });
+}
+
+// Show a native "Install App" prompt when the browser offers it.
+var deferredInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  var b=$('installBtn');if(b)b.style.display='flex';
+});
+function installApp(){
+  if(!deferredInstallPrompt)return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.finally(function(){
+    deferredInstallPrompt=null;
+    var b=$('installBtn');if(b)b.style.display='none';
+  });
+}
+
 const cfg = {
   apiKey:"AIzaSyCCs7KTPZglhh4TaH8_UYmA_Asnc6n9IyM",
   authDomain:"nexora-studio-62bb9.firebaseapp.com",
