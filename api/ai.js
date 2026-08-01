@@ -28,13 +28,13 @@ export default async function handler(req, res) {
 
   const body = {
     contents,
-    generationConfig: { maxOutputTokens: 800, temperature: 0.7 },
+    generationConfig: { maxOutputTokens: 800 },
   };
   if (system) body.systemInstruction = { parts: [{ text: String(system).slice(0, 4000) }] };
 
   try {
     const r = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
       {
         method: 'POST',
         headers: {
