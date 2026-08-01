@@ -20,11 +20,19 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Convert {role: 'user'|'assistant', content: string}[] into Gemini's format.
-  const contents = messages.map((m) => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: String(m.content || '').slice(0, 8000) }],
-  }));
+  // Convert our {role, parts:[{text}|{image:{mimeType,data}}]}[] into Gemini's format.
+  const contents = messages.map((m) => {
+    var parts = Array.isArray(m.parts) ? m.parts : [{ text: String(m.content || '') }];
+    return {
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: parts.map((p) => {
+        if (p.image && p.image.data) {
+          return { inlineData: { mimeType: p.image.mimeType || 'image/jpeg', data: p.image.data } };
+        }
+        return { text: String(p.text || '').slice(0, 8000) };
+      }),
+    };
+  });
 
   const body = {
     contents,

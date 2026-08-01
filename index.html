@@ -2000,19 +2000,37 @@ function callAI(userMsg,rid){
       var hist=[];
       snap.forEach(function(d){
         var m=d.data();
-        if(m.type!=='system'&&m.type!=='attachment'&&m.type!=='invite'&&hist.length<10)
-          hist.unshift({role:m.senderId==='ai-nexora'?'assistant':'user',content:m.text});
+        if(hist.length>=12)return;
+        if(m.type==='system'||m.type==='invite')return;
+        var role=m.senderId==='ai-nexora'?'assistant':'user';
+        if(m.type==='attachment'&&m.fileType==='image'&&m.fileData){
+          var match=/^data:([^;]+);base64,(.+)$/.exec(m.fileData);
+          if(match){
+            hist.unshift({role:role,parts:[
+              {text:'[image attached: '+(m.fileName||'photo')+']'},
+              {image:{mimeType:match[1],data:match[2]}}
+            ]});
+            return;
+          }
+        }
+        if(m.type==='attachment'){
+          hist.unshift({role:role,parts:[{text:'[sent a file: '+(m.fileName||'file')+']'}]});
+          return;
+        }
+        if(m.text)hist.unshift({role:role,parts:[{text:m.text}]});
       });
       return db.collection('rooms').doc(rid).collection('messages').add({
         senderId:'ai-nexora',senderName:'Nexora AI',
         text:'✦ Thinking...',type:'ai',timestamp:firebase.firestore.FieldValue.serverTimestamp()
       }).then(function(tRef){
+        var sys='You are Nexora AI inside the private room "'+(room?room.name:'')+'"'+
+          (room&&room.desc?' ('+room.desc+')':'')+
+          '. The Tasks and Files panels in this app are not wired to real data yet (currently always empty placeholders) — '+
+          'if asked about tasks or files, say honestly that none have been added yet rather than inventing any. '+
+          'If the recent messages include an attached image, you can see it directly — describe or answer questions about it. Be concise and helpful.';
         return fetch('/api/ai',{
           method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            system:'You are Nexora AI inside the private room "'+(room?room.name:'')+'". Be concise and helpful.',
-            messages:hist.slice(-8)
-          })
+          body:JSON.stringify({system:sys,messages:hist.slice(-10)})
         }).then(function(r){return r.json();})
           .then(function(data){
             var reply=data.text||('Error: '+(data.error||'no response'));
