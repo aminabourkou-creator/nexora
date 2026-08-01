@@ -708,9 +708,13 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
     <div id="p-rsettings" style="display:none;flex:1;overflow-y:auto;padding:16px">
       <div class="card" style="padding:16px">
         <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">Room Settings</h3>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div id="rsOwnerRow" style="display:none;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)">
           <div><strong style="font-size:13px">Delete Room</strong><br><small style="color:#9C9282">This cannot be undone</small></div>
           <button style="padding:7px 14px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#fca5a5;font-size:12px;font-weight:700;cursor:pointer" onclick="deleteRoom()">Delete</button>
+        </div>
+        <div id="rsGuestRow" style="display:none;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+          <div><strong style="font-size:13px">Leave Room</strong><br><small style="color:#9C9282">You'll need a new invite to rejoin</small></div>
+          <button style="padding:7px 14px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#fca5a5;font-size:12px;font-weight:700;cursor:pointer" onclick="leaveRoom()">🚪 Leave</button>
         </div>
       </div>
     </div>
@@ -1553,9 +1557,16 @@ function openRoom(id){
     $('rvDesc').textContent=rd.desc||'';
     $('rvId').textContent='#'+rd.id.slice(0,8);
     document.title=rd.name+' — Nexora';
+    var isOwner=rd.ownerId===user.uid;
+    var ownerRow=$('rsOwnerRow'),guestRow=$('rsGuestRow');
+    if(ownerRow)ownerRow.style.display=isOwner?'flex':'none';
+    if(guestRow)guestRow.style.display=isOwner?'none':'flex';
     rTab('chat',document.getElementById('rt-chat'));
     show('rv');
-    subscribeChat(id);
+    db.collection('rooms').doc(id).collection('members').doc(user.uid).get().then(function(mSnap){
+      var since=(mSnap.exists&&mSnap.data().joinedAt)?mSnap.data().joinedAt:null;
+      subscribeChat(id,since);
+    }).catch(function(){subscribeChat(id);});
     subscribeMem(id);
   });
 }
@@ -1695,9 +1706,54 @@ function createRoom(){
 function deleteRoom(){
   if(!room||room.ownerId!==user.uid){toast('Only owner can delete','err');return;}
   if(!confirm('Delete "'+room.name+'"? This cannot be undone.'))return;
-  db.collection('rooms').doc(room.id).delete()
-    .then(function(){toast('Room deleted','ok');backDash();})
+  var rid=room.id;
+  wipeRoomMessages(rid).then(function(){
+    return db.collection('rooms').doc(rid).collection('members').get();
+  }).then(function(snap){
+    var batch=db.batch();
+    snap.forEach(function(d){batch.delete(d.ref);});
+    return snap.empty?Promise.resolve():batch.commit();
+  }).then(function(){
+    return db.collection('rooms').doc(rid).delete();
+  }).then(function(){toast('Room deleted','ok');backDash();})
     .catch(function(e){toast('Error: '+e.message,'err');});
+}
+
+function leaveRoom(){
+  if(!room||!user)return;
+  if(room.ownerId===user.uid){toast('Owners cannot leave — delete the room instead','err');return;}
+  if(!confirm('Leave "'+room.name+'"? You will need a new invite to rejoin, and you won\'t see the old messages if you do.'))return;
+  var rid=room.id,rname=room.name;
+  db.collection('rooms').doc(rid).update({
+    members:firebase.firestore.FieldValue.arrayRemove(user.uid)
+  }).then(function(){
+    return db.collection('rooms').doc(rid).collection('members').doc(user.uid).delete();
+  }).then(function(){
+    return db.collection('rooms').doc(rid).collection('messages').add({
+      senderId:'system',senderName:'System',
+      text:(userProfile.name||user.email)+' left the room.',
+      type:'system',timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }).then(function(){
+    toast('Left "'+rname+'"','ok');
+    backDash();
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+
+// Deletes every message in a room (Firestore batches are capped at 500 writes).
+function wipeRoomMessages(rid){
+  return db.collection('rooms').doc(rid).collection('messages').get().then(function(snap){
+    if(snap.empty)return;
+    var docs=snap.docs,i=0;
+    function nextBatch(){
+      if(i>=docs.length)return Promise.resolve();
+      var batch=db.batch();
+      docs.slice(i,i+450).forEach(function(d){batch.delete(d.ref);});
+      i+=450;
+      return batch.commit().then(nextBatch);
+    }
+    return nextBatch();
+  });
 }
 
 // ── INVITE ──
@@ -1856,15 +1912,26 @@ function joinRoom(){
 function cancelJoin(){invCode=null;invRoomId=null;history.replaceState({},'',location.pathname);show('auth');}
 
 // ── CHAT ──
-function subscribeChat(rid){
+function subscribeChat(rid,sinceTs){
   if(chatUnsub)chatUnsub();
-  chatUnsub=db.collection('rooms').doc(rid).collection('messages')
-    .orderBy('timestamp','asc')
-    .onSnapshot(function(snap){
+  var q=db.collection('rooms').doc(rid).collection('messages').orderBy('timestamp','asc');
+  if(sinceTs)q=q.where('timestamp','>=',sinceTs);
+  chatUnsub=q.onSnapshot(function(snap){
       var ca=$('chatArea');ca.innerHTML='';
       snap.forEach(function(d){addMsg(Object.assign({id:d.id},d.data()));});
       ca.scrollTop=ca.scrollHeight;
       $('sMsgs').textContent=snap.size;
+    },function(err){
+      console.error('Chat query error:',err);
+      // Fall back to unfiltered if a composite index isn't ready yet.
+      if(chatUnsub)chatUnsub();
+      chatUnsub=db.collection('rooms').doc(rid).collection('messages').orderBy('timestamp','asc')
+        .onSnapshot(function(snap){
+          var ca=$('chatArea');ca.innerHTML='';
+          snap.forEach(function(d){addMsg(Object.assign({id:d.id},d.data()));});
+          ca.scrollTop=ca.scrollHeight;
+          $('sMsgs').textContent=snap.size;
+        });
     });
 }
 
@@ -1933,23 +2000,22 @@ function callAI(userMsg,rid){
       var hist=[];
       snap.forEach(function(d){
         var m=d.data();
-        if(m.type!=='system'&&hist.length<10)
+        if(m.type!=='system'&&m.type!=='attachment'&&m.type!=='invite'&&hist.length<10)
           hist.unshift({role:m.senderId==='ai-nexora'?'assistant':'user',content:m.text});
       });
       return db.collection('rooms').doc(rid).collection('messages').add({
         senderId:'ai-nexora',senderName:'Nexora AI',
         text:'✦ Thinking...',type:'ai',timestamp:firebase.firestore.FieldValue.serverTimestamp()
       }).then(function(tRef){
-        return fetch('https://api.anthropic.com/v1/messages',{
+        return fetch('/api/ai',{
           method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({
-            model:'claude-sonnet-4-6',max_tokens:800,
             system:'You are Nexora AI inside the private room "'+(room?room.name:'')+'". Be concise and helpful.',
             messages:hist.slice(-8)
           })
         }).then(function(r){return r.json();})
           .then(function(data){
-            var reply=(data.content&&data.content[0]&&data.content[0].text)||'I could not respond right now.';
+            var reply=data.text||('Error: '+(data.error||'no response'));
             return tRef.update({text:reply});
           }).catch(function(){return tRef.update({text:'Error reaching AI. Try again.'});});
       });
