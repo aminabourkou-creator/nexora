@@ -573,6 +573,11 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       <div class="tbr">
         <button class="ib gh" id="installBtn" style="display:none;align-items:center;gap:5px;width:auto;padding:0 12px;font-size:12px" onclick="installApp()" title="Install app">⬇ Install</button>
         <button class="ib pri" onclick="openM('createRoom')" title="New Room">+</button>
+        <div class="nb" style="position:relative">
+          <button class="ib gh" onclick="openM('inbox')" title="Messages">💬</button>
+          <span id="msgBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#D4AF37;color:#000;
+            font-size:9px;font-weight:800;border-radius:99px;padding:1px 5px;min-width:15px;text-align:center;border:2px solid #0B0A08">0</span>
+        </div>
         <div class="nb"><button class="ib gh" onclick="toast('No new notifications','inf')">🔔</button></div>
         <div class="av" id="topAv" style="width:32px;height:32px;font-size:11px;cursor:pointer" onclick="openM('profile')"></div>
         <span class="tb-name" id="topName"></span>
@@ -842,6 +847,17 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
   </div>
 </div>
 
+<div class="ovl off" id="m-inbox">
+  <div class="modal" style="max-width:400px">
+    <h2>💬 Messages</h2>
+    <p style="margin-bottom:12px">Your conversations with friends.</p>
+    <div id="inboxList" class="rempty" style="padding:20px 8px;max-height:400px;overflow-y:auto">No conversations yet. Add a friend and say hi!</div>
+    <div class="macts" style="margin-top:14px">
+      <button class="bcnl" style="width:100%" onclick="closeM('inbox')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div id="dm" class="off">
   <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0">
     <button class="ib gh" onclick="closeDM()">←</button>
@@ -1071,6 +1087,7 @@ function renderUser(u){
   $('wMsg').textContent='Welcome, '+name.split(' ')[0]+'! 👋';
   var svipEl=$('svipBadge');if(svipEl)svipEl.style.display=(u.email===OWNER_EMAIL)?'inline-block':'none';
   startFriendsListeners();
+  startInboxListener();
 }
 
 // ── PROFILE EDIT ──
@@ -1250,8 +1267,16 @@ function declineRequest(reqId){
 
 // ── DIRECT MESSAGES ──
 var dmUnsub=null, currentDM=null;
+var inboxUnsub=null, dmReadsUnsub=null;
+var dmReadTimes={}, dmDocs={}, inboxFirstLoad=true;
+
 function dmIdFor(otherUid){
   return [user.uid,otherUid].sort().join('_');
+}
+function markDMRead(id){
+  if(!user)return;
+  db.collection('users').doc(user.uid).collection('dmReads').doc(id)
+    .set({lastReadAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
 }
 function openDM(otherUid,data){
   currentDM={uid:otherUid,name:data.name,username:data.username,photoData:data.photoData||''};
@@ -1262,12 +1287,19 @@ function openDM(otherUid,data){
   $('dmArea').innerHTML='';
   $('dm').classList.remove('off');
   var id=dmIdFor(otherUid);
+  db.collection('dms').doc(id).set({
+    participants:[user.uid,otherUid],
+    names:Object.assign({},dmDocs[id]&&dmDocs[id].names,(function(){var o={};o[user.uid]=userProfile.name;o[otherUid]=data.name;return o;})()),
+    photos:(function(){var o={};o[user.uid]=userProfile.photoData||'';o[otherUid]=data.photoData||'';return o;})(),
+    usernames:(function(){var o={};o[user.uid]=userProfile.username;o[otherUid]=data.username;return o;})()
+  },{merge:true});
   if(dmUnsub)dmUnsub();
   dmUnsub=db.collection('dms').doc(id).collection('messages').orderBy('timestamp','asc')
     .onSnapshot(function(snap){
       var area=$('dmArea');area.innerHTML='';
       snap.forEach(function(d){addDMMsg({id:d.id,...d.data()});});
       area.scrollTop=area.scrollHeight;
+      markDMRead(id);
     });
 }
 function closeDM(){
@@ -1298,11 +1330,90 @@ function sendDM(){
   if(!text||!currentDM||!user)return;
   inp.value='';
   var id=dmIdFor(currentDM.uid);
-  db.collection('dms').doc(id).set({participants:[user.uid,currentDM.uid],lastMsg:text,lastAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  db.collection('dms').doc(id).set({
+    participants:[user.uid,currentDM.uid],lastMsg:text,lastSenderId:user.uid,
+    lastAt:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true});
   db.collection('dms').doc(id).collection('messages').add({
     senderId:user.uid,senderName:userProfile.name,text:text,type:'text',
     timestamp:firebase.firestore.FieldValue.serverTimestamp()
   }).catch(function(e){toast('Send failed: '+e.message,'err');});
+}
+
+// ── MESSAGES INBOX (conversation list + unread badge + toast) ──
+function startInboxListener(){
+  if(!user)return;
+  inboxFirstLoad=true;
+  if(dmReadsUnsub)dmReadsUnsub();
+  dmReadsUnsub=db.collection('users').doc(user.uid).collection('dmReads')
+    .onSnapshot(function(snap){
+      snap.forEach(function(d){dmReadTimes[d.id]=d.data().lastReadAt;});
+      renderInbox();
+    });
+  if(inboxUnsub)inboxUnsub();
+  inboxUnsub=db.collection('dms').where('participants','array-contains',user.uid)
+    .orderBy('lastAt','desc')
+    .onSnapshot(function(snap){
+      snap.docChanges().forEach(function(ch){
+        var d=ch.doc.data();
+        if(!inboxFirstLoad&&(ch.type==='added'||ch.type==='modified')&&d.lastSenderId&&d.lastSenderId!==user.uid){
+          var openId=currentDM?dmIdFor(currentDM.uid):null;
+          if(ch.doc.id!==openId){
+            var nm=(d.names&&d.names[d.lastSenderId])||'Someone';
+            toast('💬 '+nm+': '+(d.lastMsg||'').slice(0,60),'inf');
+          }
+        }
+      });
+      dmDocs={};
+      snap.forEach(function(d){dmDocs[d.id]={id:d.id,...d.data()};});
+      inboxFirstLoad=false;
+      renderInbox();
+    },function(err){
+      console.error('Inbox query error:',err);
+      toast('Messages inbox error: '+err.message,'err');
+    });
+}
+function stopInboxListener(){
+  if(inboxUnsub){inboxUnsub();inboxUnsub=null;}
+  if(dmReadsUnsub){dmReadsUnsub();dmReadsUnsub=null;}
+  dmDocs={};dmReadTimes={};
+}
+function renderInbox(){
+  var list=Object.keys(dmDocs).map(function(k){return dmDocs[k];});
+  var unreadCount=0;
+  list.forEach(function(d){
+    var read=dmReadTimes[d.id];
+    var isUnread=d.lastSenderId&&d.lastSenderId!==user.uid&&(!read||(d.lastAt&&d.lastAt.toMillis&&read.toMillis&&d.lastAt.toMillis()>read.toMillis()));
+    d._unread=isUnread;
+    if(isUnread)unreadCount++;
+  });
+  var badge=$('msgBadge');
+  if(badge){badge.style.display=unreadCount?'block':'none';badge.textContent=unreadCount;}
+  var el=$('inboxList');
+  if(!el)return;
+  if(!list.length){el.className='rempty';el.style.padding='20px 8px';el.innerHTML='No conversations yet. Add a friend and say hi!';return;}
+  el.className='';el.style.padding='0';
+  el.innerHTML=list.map(function(d){
+    var otherUid=(d.participants||[]).filter(function(p){return p!==user.uid;})[0];
+    var name=(d.names&&d.names[otherUid])||'User';
+    var uname=(d.usernames&&d.usernames[otherUid])||'';
+    var photo=(d.photos&&d.photos[otherUid])||'';
+    var init=initials(name,'');
+    var dataObj={uid:otherUid,name:name,username:uname,photoData:photo};
+    return '<div class="memrow" style="padding:9px 4px;cursor:pointer" onclick=\'openInboxConvo(this)\' data-conv=\''+
+      JSON.stringify(dataObj).replace(/'/g,"&#39;")+'\'>'+
+      '<div class="av" style="width:36px;height:36px;font-size:12px">'+avatarInner(photo,init)+'</div>'+
+      '<div class="meminfo" style="flex:1;min-width:0"><strong>'+escHtml(name)+
+      (d._unread?' <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#D4AF37;margin-left:4px"></span>':'')+
+      '</strong><small style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px">'+
+      escHtml(d.lastMsg||'')+'</small></div>'+
+      '</div>';
+  }).join('');
+}
+function openInboxConvo(el){
+  var d=JSON.parse(el.getAttribute('data-conv'));
+  closeM('inbox');
+  openDM(d.uid,d);
 }
 
 
@@ -1369,6 +1480,7 @@ function doLogout(){
   if(chatUnsub)chatUnsub();if(memUnsub)memUnsub();
   if(voiceOn)leaveVoice();
   stopFriendsListeners();
+  stopInboxListener();
   if(dmUnsub){dmUnsub();dmUnsub=null;}
   $('dm').classList.add('off');currentDM=null;
   auth.signOut();rooms=[];room=null;show('auth');
