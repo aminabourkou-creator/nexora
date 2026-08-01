@@ -659,6 +659,7 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       <h4>👥 Invite People</h4>
       <p>Share link to invite</p>
       <button class="binv" onclick="genInvite()">Copy Invite Link</button>
+      <button class="binv" style="margin-top:8px;background:rgba(212,175,55,.12);color:#D4AF37;border:1px solid rgba(212,175,55,.25)" onclick="openRoomInviteFriends()">📤 Send to Friends</button>
     </div>
   </div>
 
@@ -854,6 +855,19 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
     <div id="inboxList" class="rempty" style="padding:20px 8px;max-height:400px;overflow-y:auto">No conversations yet. Add a friend and say hi!</div>
     <div class="macts" style="margin-top:14px">
       <button class="bcnl" style="width:100%" onclick="closeM('inbox')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="ovl off" id="m-inviteFriends">
+  <div class="modal" style="max-width:400px">
+    <h2>📤 Send to Friends</h2>
+    <p style="margin-bottom:12px">They'll get a direct link in your chat to join "<span id="rifRoomName"></span>".</p>
+    <div id="rifList" class="rempty" style="padding:20px 8px;max-height:320px;overflow-y:auto">No friends yet.</div>
+    <div id="rifErr" class="alert"></div>
+    <div class="macts" style="margin-top:14px">
+      <button class="bcnl" onclick="closeM('inviteFriends')">Cancel</button>
+      <button class="bok" id="rifSendBtn" onclick="sendRoomInviteToFriends()">Send</button>
     </div>
   </div>
 </div>
@@ -1318,12 +1332,30 @@ function addDMMsg(m){
     } else {
       bodyHtml='<a href="'+m.fileData+'" download="'+safeName+'" style="color:#D4AF37">📄 '+safeName+'</a>';
     }
+  } else if(m.type==='invite'){
+    bodyHtml='<div style="min-width:200px">'+
+      '<div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">'+
+      '<div style="width:36px;height:36px;border-radius:10px;background:rgba(212,175,55,.14);display:flex;align-items:center;justify-content:center;font-size:18px">'+(m.roomEmoji||'🤖')+'</div>'+
+      '<div><strong style="font-size:13px;display:block">'+escHtml(m.roomName||'Room')+'</strong><small style="color:#9C9282">Private room invite</small></div>'+
+      '</div>'+
+      '<a href="'+m.inviteUrl+'" onclick="return followRoomInvite(event,\''+m.inviteUrl+'\')" style="display:block;text-align:center;padding:9px;border-radius:9px;background:linear-gradient(135deg,#D4AF37,#B08D2B);color:#000;font-weight:700;font-size:12px;text-decoration:none">Join Room →</a>'+
+      '</div>';
   } else { bodyHtml=fmt(m.text); }
   var d=document.createElement('div');
   d.style.cssText='display:flex;'+(own?'justify-content:flex-end':'justify-content:flex-start')+';margin-bottom:8px';
   d.innerHTML='<div class="bubble'+(own?' own':'')+'" style="max-width:75%">'+bodyHtml+
     '<div style="font-size:9px;opacity:.55;margin-top:3px">'+fmtTime(m.timestamp)+'</div></div>';
   area.appendChild(d);
+}
+function followRoomInvite(ev,url){
+  ev.preventDefault();
+  closeDM();
+  history.pushState({},'',url);
+  invCode=new URLSearchParams(location.search).get('invite');
+  invRoomId=new URLSearchParams(location.search).get('room');
+  show('join');
+  checkInvite();
+  return false;
 }
 function sendDM(){
   var inp=$('dmInp');var text=inp.value.trim();
@@ -1687,6 +1719,61 @@ function genInvite(){
   }).catch(function(e){$('invUrl').textContent='Error: '+e.message;});
 }
 function cpyInv(){navigator.clipboard.writeText(invUrl).then(function(){toast('Link copied!','ok');});}
+
+// ── SEND ROOM INVITE TO FRIENDS (via DM) ──
+function openRoomInviteFriends(){
+  if(!room){toast('No room selected','err');return;}
+  calrt('rifErr');
+  $('rifRoomName').textContent=room.name;
+  openM('inviteFriends');
+  var el=$('rifList');
+  if(!myFriends.length){el.className='rempty';el.style.padding='20px 8px';el.innerHTML='No friends yet. Add some from the Friends tab first.';return;}
+  el.className='';el.style.padding='0';
+  el.innerHTML=myFriends.map(function(f){
+    var init=initials(f.name,f.email);
+    return '<label class="memrow" style="padding:8px 4px;cursor:pointer">'+
+      '<input type="checkbox" class="rif-chk" value="'+f.uid+'" style="width:16px;height:16px;accent-color:#D4AF37;margin-right:2px"/>'+
+      '<div class="av" style="width:32px;height:32px;font-size:11px">'+avatarInner(f.photoData,init)+'</div>'+
+      '<div class="meminfo"><strong>'+escHtml(f.name||'User')+'</strong><small>@'+escHtml(f.username||'')+'</small></div>'+
+      '</label>';
+  }).join('');
+}
+function sendRoomInviteToFriends(){
+  var checked=Array.prototype.slice.call(document.querySelectorAll('.rif-chk:checked')).map(function(c){return c.value;});
+  if(!checked.length){alrt('rifErr','Pick at least one friend.');return;}
+  var btn=$('rifSendBtn');btn.disabled=true;var old=btn.textContent;btn.innerHTML=spin();
+  var code=genCode(16);
+  var exp=new Date(Date.now()+60*60*1000);
+  db.collection('invites').doc(code).set({
+    roomId:room.id,roomName:room.name,inviteCode:code,
+    createdBy:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+    expiresAt:firebase.firestore.Timestamp.fromDate(exp),status:'active'
+  }).then(function(){
+    var url=location.origin+location.pathname+'?invite='+code+'&room='+room.id;
+    var sends=checked.map(function(uid){
+      var dmId=dmIdFor(uid);
+      var friendData=myFriends.filter(function(f){return f.uid===uid;})[0]||{};
+      return db.collection('dms').doc(dmId).set({
+        participants:[user.uid,uid],lastMsg:'📨 Room invite: '+room.name,lastSenderId:user.uid,
+        lastAt:firebase.firestore.FieldValue.serverTimestamp(),
+        names:(function(){var o={};o[user.uid]=userProfile.name;o[uid]=friendData.name;return o;})(),
+        photos:(function(){var o={};o[user.uid]=userProfile.photoData||'';o[uid]=friendData.photoData||'';return o;})(),
+        usernames:(function(){var o={};o[user.uid]=userProfile.username;o[uid]=friendData.username;return o;})()
+      },{merge:true}).then(function(){
+        return db.collection('dms').doc(dmId).collection('messages').add({
+          senderId:user.uid,senderName:userProfile.name,type:'invite',
+          roomId:room.id,roomName:room.name,roomEmoji:room.emoji||'🤖',inviteUrl:url,
+          timestamp:firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+    });
+    return Promise.all(sends);
+  }).then(function(){
+    toast('Invite sent to '+checked.length+' friend(s)!','ok');
+    closeM('inviteFriends');
+  }).catch(function(e){alrt('rifErr',e.message);})
+    .then(function(){btn.disabled=false;btn.textContent=old;});
+}
 
 // ── INVITE JOIN FLOW ──
 function checkInvite(){
