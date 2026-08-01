@@ -1732,7 +1732,7 @@ function openRoomInviteFriends(){
   el.innerHTML=myFriends.map(function(f){
     var init=initials(f.name,f.email);
     return '<label class="memrow" style="padding:8px 4px;cursor:pointer">'+
-      '<input type="checkbox" class="rif-chk" value="'+f.uid+'" style="width:16px;height:16px;accent-color:#D4AF37;margin-right:2px"/>'+
+      '<input type="checkbox" class="rif-chk" value="'+f.uid+'" style="width:18px;height:18px;flex-shrink:0;accent-color:#D4AF37;-webkit-appearance:checkbox;appearance:auto;margin-right:2px;cursor:pointer"/>'+
       '<div class="av" style="width:32px;height:32px;font-size:11px">'+avatarInner(f.photoData,init)+'</div>'+
       '<div class="meminfo"><strong>'+escHtml(f.name||'User')+'</strong><small>@'+escHtml(f.username||'')+'</small></div>'+
       '</label>';
