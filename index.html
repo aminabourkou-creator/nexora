@@ -35,6 +35,8 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
 #app.off{opacity:0;pointer-events:none;}
 #rv{position:fixed;inset:0;z-index:15;display:flex;background:#0B0A08;}
 #rv.off{display:none;}
+#dm{position:fixed;inset:0;z-index:16;display:flex;flex-direction:column;background:#0B0A08;}
+#dm.off{display:none;}
 
 /* TOAST */
 #toasts{position:fixed;bottom:24px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:88vw;}
@@ -551,6 +553,9 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
     <nav class="sb-nav">
       <div class="nrow on" onclick="navTo(this)"><span class="ni">🏠</span><span class="nl">Dashboard</span></div>
       <div class="nrow" onclick="navTo(this)"><span class="ni">🚪</span><span class="nl">My Rooms</span></div>
+      <div class="nrow" onclick="navTo(this);openM('friends')"><span class="ni">🤝</span><span class="nl">Friends</span>
+        <span id="frBadge" style="display:none;margin-left:auto;background:#D4AF37;color:#000;font-size:10px;
+          font-weight:800;border-radius:99px;padding:1px 7px">0</span></div>
       <div class="nrow" onclick="navTo(this);openM('profile')"><span class="ni">👤</span><span class="nl">Profile</span></div>
       <div class="nrow" onclick="navTo(this);openM('profile')"><span class="ni">⚙️</span><span class="nl">Settings</span></div>
     </nav>
@@ -805,6 +810,56 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
   </div>
 </div>
 
+<div class="ovl off" id="m-friends">
+  <div class="modal" style="max-width:400px">
+    <h2>🤝 Friends</h2>
+    <div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08)" id="frTabs">
+      <div class="rtab on" data-ftab="add" onclick="frTab('add')" style="flex:1;justify-content:center">Add</div>
+      <div class="rtab" data-ftab="reqs" onclick="frTab('reqs')" style="flex:1;justify-content:center">Requests<span id="frTabBadge" style="display:none;margin-left:4px;color:#D4AF37">•</span></div>
+      <div class="rtab" data-ftab="list" onclick="frTab('list')" style="flex:1;justify-content:center">Friends</div>
+    </div>
+
+    <div id="fp-add">
+      <div class="field" style="margin-bottom:8px">
+        <span class="ico">🔍</span>
+        <input class="ti" style="padding-left:36px;margin-bottom:0" id="frSearchI" placeholder="Search by @username or email" onkeydown="if(event.key==='Enter')searchFriend()"/>
+      </div>
+      <button class="btn-act" style="width:100%;margin-bottom:10px" onclick="searchFriend()">Search</button>
+      <div id="frSearchResult"></div>
+    </div>
+
+    <div id="fp-reqs" style="display:none;max-height:340px;overflow-y:auto">
+      <div id="frReqList" class="rempty" style="padding:16px 8px">No pending requests.</div>
+    </div>
+
+    <div id="fp-list" style="display:none;max-height:340px;overflow-y:auto">
+      <div id="frFriendList" class="rempty" style="padding:16px 8px">No friends yet. Add one!</div>
+    </div>
+
+    <div class="macts" style="margin-top:14px">
+      <button class="bcnl" style="width:100%" onclick="closeM('friends')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="dm" class="off">
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0">
+    <button class="ib gh" onclick="closeDM()">←</button>
+    <div class="av" id="dmAv" style="width:34px;height:34px;font-size:12px"></div>
+    <div style="flex:1;min-width:0">
+      <strong id="dmName" style="display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#F5EFDD">—</strong>
+      <small id="dmSub" style="color:#9C9282;font-size:11px">@—</small>
+    </div>
+  </div>
+  <div id="dmArea" style="flex:1;overflow-y:auto;padding:16px"></div>
+  <div class="cinp-wrap">
+    <div class="cinp-row">
+      <input id="dmInp" placeholder="Message..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDM();}"/>
+      <button class="sbtn" onclick="sendDM()">➤</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Firebase SDK loaded via CDN as classic scripts (NOT module) ──
 // This avoids ALL top-level await and ES module issues on mobile browsers
@@ -1015,6 +1070,7 @@ function renderUser(u){
   $('topName').textContent=name;
   $('wMsg').textContent='Welcome, '+name.split(' ')[0]+'! 👋';
   var svipEl=$('svipBadge');if(svipEl)svipEl.style.display=(u.email===OWNER_EMAIL)?'inline-block':'none';
+  startFriendsListeners();
 }
 
 // ── PROFILE EDIT ──
@@ -1064,6 +1120,189 @@ function saveProfile(){
       closeM('profile');
     }).catch(function(e){alrt('pErr',e.message);})
     .then(function(){btn.disabled=false;btn.textContent=oldTxt;});
+}
+
+// ── FRIENDS SYSTEM ──
+var friendsUnsub=null, reqUnsub=null, myFriends=[], myFriendUids=[];
+
+function frTab(tab){
+  ['add','reqs','list'].forEach(function(t){
+    var panel=$('fp-'+t);if(panel)panel.style.display=(t===tab?'block':'none');
+    var btn=document.querySelector('[data-ftab="'+t+'"]');if(btn)btn.classList.toggle('on',t===tab);
+  });
+}
+
+function startFriendsListeners(){
+  if(!user)return;
+  if(friendsUnsub)friendsUnsub();
+  friendsUnsub=db.collection('users').doc(user.uid).collection('friends')
+    .onSnapshot(function(snap){
+      myFriends=[];myFriendUids=[];
+      snap.forEach(function(d){myFriends.push(d.data());myFriendUids.push(d.id);});
+      renderFriendList();
+    });
+  if(reqUnsub)reqUnsub();
+  reqUnsub=db.collection('friendRequests')
+    .where('toUid','==',user.uid).where('status','==','pending')
+    .onSnapshot(function(snap){
+      var reqs=[];snap.forEach(function(d){reqs.push({id:d.id,...d.data()});});
+      renderRequests(reqs);
+      var b1=$('frBadge'),b2=$('frTabBadge');
+      if(reqs.length){b1.style.display='inline-block';b1.textContent=reqs.length;b2.style.display='inline';}
+      else{b1.style.display='none';b2.style.display='none';}
+    });
+}
+function stopFriendsListeners(){
+  if(friendsUnsub){friendsUnsub();friendsUnsub=null;}
+  if(reqUnsub){reqUnsub();reqUnsub=null;}
+}
+
+function renderRequests(reqs){
+  var el=$('frReqList');
+  if(!reqs.length){el.className='rempty';el.style.padding='16px 8px';el.innerHTML='No pending requests.';return;}
+  el.className='';el.style.padding='0';
+  el.innerHTML=reqs.map(function(r){
+    var init=initials(r.fromName,r.fromEmail);
+    return '<div class="memrow" style="padding:9px 4px">'+
+      '<div class="av" style="width:34px;height:34px;font-size:11px">'+avatarInner(r.fromPhoto,init)+'</div>'+
+      '<div class="meminfo" style="flex:1"><strong>'+escHtml(r.fromName||'User')+'</strong><small>@'+escHtml(r.fromUsername||'')+'</small></div>'+
+      '<button class="ib pri" style="width:30px;height:30px" onclick="acceptRequest(\''+r.id+'\',\''+r.fromUid+'\')" title="Accept">✓</button>'+
+      '<button class="ib gh" style="width:30px;height:30px" onclick="declineRequest(\''+r.id+'\')" title="Decline">✕</button>'+
+      '</div>';
+  }).join('');
+}
+
+function renderFriendList(){
+  var el=$('frFriendList');
+  if(!myFriends.length){el.className='rempty';el.style.padding='16px 8px';el.innerHTML='No friends yet. Add one!';return;}
+  el.className='';el.style.padding='0';
+  el.innerHTML=myFriends.map(function(f){
+    var init=initials(f.name,f.email);
+    return '<div class="memrow" style="padding:9px 4px;cursor:pointer" onclick=\'openDMFromData(this)\' data-friend=\''+
+      JSON.stringify({uid:f.uid,name:f.name,username:f.username,photoData:f.photoData||''}).replace(/'/g,"&#39;")+'\'>'+
+      '<div class="av" style="width:34px;height:34px;font-size:11px">'+avatarInner(f.photoData,init)+'</div>'+
+      '<div class="meminfo" style="flex:1"><strong>'+escHtml(f.name||'User')+'</strong><small>@'+escHtml(f.username||'')+'</small></div>'+
+      '<span style="color:#D4AF37;font-size:16px">💬</span>'+
+      '</div>';
+  }).join('');
+}
+function openDMFromData(el){
+  var d=JSON.parse(el.getAttribute('data-friend'));
+  openDM(d.uid,d);
+  closeM('friends');
+}
+
+function searchFriend(){
+  var q=$('frSearchI').value.trim();
+  var box=$('frSearchResult');
+  if(!q){box.innerHTML='';return;}
+  box.innerHTML='<div style="text-align:center;padding:14px">'+spin()+'</div>';
+  var uname=q.replace(/^@/,'');
+  Promise.all([
+    db.collection('users').where('username','==',uname).limit(1).get(),
+    db.collection('users').where('email','==',q.toLowerCase()).limit(1).get()
+  ]).then(function(results){
+    var doc=null;
+    results.forEach(function(snap){if(!doc&&!snap.empty)doc=snap.docs[0];});
+    if(!doc){box.innerHTML='<div class="rempty" style="padding:14px">No user found.</div>';return;}
+    var d=doc.data();
+    if(doc.id===user.uid){box.innerHTML='<div class="rempty" style="padding:14px">That\'s you!</div>';return;}
+    var already=myFriendUids.indexOf(doc.id)!==-1;
+    var init=initials(d.name,d.email);
+    box.innerHTML='<div class="memrow" style="padding:10px 4px">'+
+      '<div class="av" style="width:36px;height:36px;font-size:12px">'+avatarInner(d.photoData,init)+'</div>'+
+      '<div class="meminfo" style="flex:1"><strong>'+escHtml(d.name||'User')+'</strong><small>@'+escHtml(d.username||'')+'</small></div>'+
+      (already?'<span style="color:#22c55e;font-size:11px">✓ Friends</span>':
+        '<button class="ib pri" style="width:auto;padding:0 12px;font-size:12px" onclick="sendFriendRequest(\''+doc.id+'\')">Add</button>')+
+      '</div>';
+  }).catch(function(e){box.innerHTML='<div class="rempty" style="padding:14px">'+escHtml(e.message)+'</div>';});
+}
+
+function sendFriendRequest(toUid){
+  if(!user||toUid===user.uid)return;
+  var reqId=toUid+'_'+user.uid;
+  db.collection('friendRequests').doc(reqId).set({
+    fromUid:user.uid,fromName:userProfile.name,fromUsername:userProfile.username,
+    fromEmail:user.email,fromPhoto:userProfile.photoData||'',
+    toUid:toUid,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){toast('Friend request sent!','ok');searchFriend();})
+    .catch(function(e){toast('Error: '+e.message,'err');});
+}
+
+function acceptRequest(reqId,fromUid){
+  db.collection('friendRequests').doc(reqId).get().then(function(snap){
+    if(!snap.exists)return;
+    var r=snap.data();
+    var batch=db.batch();
+    batch.set(db.collection('users').doc(user.uid).collection('friends').doc(fromUid),{
+      uid:fromUid,name:r.fromName,username:r.fromUsername,email:r.fromEmail,photoData:r.fromPhoto||'',since:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    batch.set(db.collection('users').doc(fromUid).collection('friends').doc(user.uid),{
+      uid:user.uid,name:userProfile.name,username:userProfile.username,email:user.email,photoData:userProfile.photoData||'',since:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    batch.delete(db.collection('friendRequests').doc(reqId));
+    return batch.commit();
+  }).then(function(){toast('Friend added!','ok');}).catch(function(e){toast('Error: '+e.message,'err');});
+}
+function declineRequest(reqId){
+  db.collection('friendRequests').doc(reqId).delete().catch(function(){});
+}
+
+// ── DIRECT MESSAGES ──
+var dmUnsub=null, currentDM=null;
+function dmIdFor(otherUid){
+  return [user.uid,otherUid].sort().join('_');
+}
+function openDM(otherUid,data){
+  currentDM={uid:otherUid,name:data.name,username:data.username,photoData:data.photoData||''};
+  var init=initials(data.name,data.email);
+  $('dmAv').innerHTML=avatarInner(data.photoData,init);
+  $('dmName').textContent=data.name||'User';
+  $('dmSub').textContent='@'+(data.username||'');
+  $('dmArea').innerHTML='';
+  $('dm').classList.remove('off');
+  var id=dmIdFor(otherUid);
+  if(dmUnsub)dmUnsub();
+  dmUnsub=db.collection('dms').doc(id).collection('messages').orderBy('timestamp','asc')
+    .onSnapshot(function(snap){
+      var area=$('dmArea');area.innerHTML='';
+      snap.forEach(function(d){addDMMsg({id:d.id,...d.data()});});
+      area.scrollTop=area.scrollHeight;
+    });
+}
+function closeDM(){
+  if(dmUnsub){dmUnsub();dmUnsub=null;}
+  currentDM=null;
+  $('dm').classList.add('off');
+}
+function addDMMsg(m){
+  var area=$('dmArea');
+  var own=m.senderId===(user&&user.uid);
+  var bodyHtml;
+  if(m.type==='attachment'){
+    var safeName=escHtml(m.fileName||'file');
+    if(m.fileType==='image'){
+      bodyHtml='<a href="'+m.fileData+'" download="'+safeName+'" style="display:block"><img src="'+m.fileData+'" style="max-width:200px;max-height:200px;border-radius:10px;display:block"/></a>';
+    } else {
+      bodyHtml='<a href="'+m.fileData+'" download="'+safeName+'" style="color:#D4AF37">📄 '+safeName+'</a>';
+    }
+  } else { bodyHtml=fmt(m.text); }
+  var d=document.createElement('div');
+  d.style.cssText='display:flex;'+(own?'justify-content:flex-end':'justify-content:flex-start')+';margin-bottom:8px';
+  d.innerHTML='<div class="bubble'+(own?' own':'')+'" style="max-width:75%">'+bodyHtml+
+    '<div style="font-size:9px;opacity:.55;margin-top:3px">'+fmtTime(m.timestamp)+'</div></div>';
+  area.appendChild(d);
+}
+function sendDM(){
+  var inp=$('dmInp');var text=inp.value.trim();
+  if(!text||!currentDM||!user)return;
+  inp.value='';
+  var id=dmIdFor(currentDM.uid);
+  db.collection('dms').doc(id).set({participants:[user.uid,currentDM.uid],lastMsg:text,lastAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  db.collection('dms').doc(id).collection('messages').add({
+    senderId:user.uid,senderName:userProfile.name,text:text,type:'text',
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(function(e){toast('Send failed: '+e.message,'err');});
 }
 
 
@@ -1129,6 +1368,9 @@ function forgotPw(){
 function doLogout(){
   if(chatUnsub)chatUnsub();if(memUnsub)memUnsub();
   if(voiceOn)leaveVoice();
+  stopFriendsListeners();
+  if(dmUnsub){dmUnsub();dmUnsub=null;}
+  $('dm').classList.add('off');currentDM=null;
   auth.signOut();rooms=[];room=null;show('auth');
 }
 
@@ -1590,6 +1832,11 @@ function openM(id){
     $('pBioCt').textContent=(userProfile.bio||'').length;
     $('pAv').innerHTML=avatarInner(userProfile.photoData,initials(userProfile.name,user&&user.email));
     $('pEmail').textContent=(user&&user.email)||'';
+  }
+  if(id==='friends'){
+    frTab('add');
+    $('frSearchI').value='';
+    $('frSearchResult').innerHTML='';
   }
 }
 function closeM(id){var el=$('m-'+id);if(el)el.classList.add('off');}
