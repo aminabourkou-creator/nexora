@@ -533,6 +533,7 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       Continue with Google
     </button>
     <div class="auth-foot"><span id="aFT">Don't have an account?</span> <a id="aFL" onclick="switchTab('up')">Sign Up</a></div>
+    <div style="text-align:center;margin-top:14px"><a href="./privacy.html" style="color:#9C9282;font-size:11px;text-decoration:underline">Privacy Policy</a></div>
   </div>
 </div>
 
@@ -702,7 +703,13 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       </div>
     </div>
     <div id="p-whiteboard" class="ph-panel" style="display:none"><div class="icon">🖊️</div><h3>Whiteboard</h3><p>Collaborative canvas coming soon</p></div>
-    <div id="p-tasks" style="display:none;flex:1;overflow-y:auto;padding:16px"></div>
+    <div id="p-tasks" style="display:none;flex:1;overflow-y:auto;padding:16px">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="newTaskI" class="ti" style="margin-bottom:0;flex:1" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTask()"/>
+        <button class="ib pri" style="width:auto;padding:0 16px" onclick="addTask()">Add</button>
+      </div>
+      <div id="taskPanelList" class="rempty" style="padding:24px 8px">No tasks yet. Add one above!</div>
+    </div>
     <div id="p-files" class="ph-panel" style="display:none"><div class="icon">📁</div><h3>Files</h3><p>File sharing coming soon</p></div>
     <div id="p-links" class="ph-panel" style="display:none"><div class="icon">🔗</div><h3>Links</h3><p>Shared links coming soon</p></div>
     <div id="p-rsettings" style="display:none;flex:1;overflow-y:auto;padding:16px">
@@ -726,8 +733,8 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       <div id="memList"></div>
     </div>
     <div class="rrs">
-      <div class="rrs-hd"><span>Tasks</span><button class="abtn" onclick="toast('Task creation coming soon!','inf')">+</button></div>
-      <div class="rempty" style="padding:16px 8px">No tasks yet.</div>
+      <div class="rrs-hd"><span>Tasks</span><button class="abtn" onclick="rTab('tasks',document.getElementById('rt-tasks'))">+</button></div>
+      <div id="sideTaskList" class="rempty" style="padding:16px 8px">No tasks yet.</div>
     </div>
     <div class="rrs">
       <div class="rrs-hd"><span>Files</span><button class="abtn" onclick="toast('Upload coming soon!','inf')">+</button></div>
@@ -817,6 +824,7 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       <button class="bok" id="pSaveBtn" onclick="saveProfile()">Save</button>
     </div>
     <button class="bcnl" style="width:100%;margin-top:9px;color:#f87171" onclick="doLogout();closeM('profile')">Sign Out</button>
+    <div style="text-align:center;margin-top:12px"><a href="./privacy.html" style="color:#9C9282;font-size:11px;text-decoration:underline">Privacy Policy</a></div>
   </div>
 </div>
 
@@ -983,6 +991,7 @@ let voiceOn=false,micMuted=false,localStream=null,authTab='in';
 let userProfile={name:'',username:'',bio:'',photoData:''};
 let pendingAvatarData=null;
 const OWNER_EMAIL='aminabenzaram@gmail.com';
+let taskUnsub=null, roomTasks=[];
 
 // Read invite from URL immediately
 (function(){
@@ -1568,11 +1577,13 @@ function openRoom(id){
       subscribeChat(id,since);
     }).catch(function(){subscribeChat(id);});
     subscribeMem(id);
+    subscribeTasks(id);
   });
 }
 
 function backDash(){
   if(chatUnsub)chatUnsub();if(memUnsub)memUnsub();
+  if(taskUnsub){taskUnsub();taskUnsub=null;}
   if(voiceOn)leaveVoice();
   room=null;document.title='Nexora Studio';show('app');
 }
@@ -2062,7 +2073,62 @@ function subscribeMem(rid){
     });
 }
 
-// ── VOICE ──
+// ── TASKS ──
+function subscribeTasks(rid){
+  if(taskUnsub)taskUnsub();
+  taskUnsub=db.collection('rooms').doc(rid).collection('tasks').orderBy('createdAt','asc')
+    .onSnapshot(function(snap){
+      roomTasks=[];
+      snap.forEach(function(d){roomTasks.push({id:d.id,...d.data()});});
+      renderTasksSidebar();
+      renderTasksPanel();
+    },function(err){console.error('Tasks query error:',err);});
+}
+function addTask(){
+  var inp=$('newTaskI');var text=inp.value.trim();
+  if(!text||!room||!user)return;
+  inp.value='';
+  db.collection('rooms').doc(room.id).collection('tasks').add({
+    text:text,done:false,createdBy:user.uid,createdByName:userProfile.name,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+function toggleTask(id,done){
+  if(!room)return;
+  db.collection('rooms').doc(room.id).collection('tasks').doc(id).update({done:!done})
+    .catch(function(e){toast('Error: '+e.message,'err');});
+}
+function deleteTask(id){
+  if(!room)return;
+  db.collection('rooms').doc(room.id).collection('tasks').doc(id).delete()
+    .catch(function(e){toast('Error: '+e.message,'err');});
+}
+function renderTasksSidebar(){
+  var el=$('sideTaskList');if(!el)return;
+  if(!roomTasks.length){el.className='rempty';el.style.padding='16px 8px';el.innerHTML='No tasks yet.';return;}
+  el.className='';el.style.padding='0';
+  el.innerHTML=roomTasks.slice(0,6).map(function(t){
+    return '<div class="trow">'+
+      '<div class="tchk'+(t.done?' done':'')+'" onclick="toggleTask(\''+t.id+'\','+!!t.done+')">'+(t.done?'<span style="font-size:10px;color:#000">✓</span>':'')+'</div>'+
+      '<div class="ti2"><strong style="'+(t.done?'text-decoration:line-through;opacity:.5':'')+'">'+escHtml(t.text)+'</strong></div>'+
+      '</div>';
+  }).join('');
+}
+function renderTasksPanel(){
+  var el=$('taskPanelList');if(!el)return;
+  if(!roomTasks.length){el.className='rempty';el.style.padding='24px 8px';el.innerHTML='No tasks yet. Add one above!';return;}
+  el.className='';el.style.padding='0';
+  el.innerHTML=roomTasks.map(function(t){
+    return '<div class="trow">'+
+      '<div class="tchk'+(t.done?' done':'')+'" onclick="toggleTask(\''+t.id+'\','+!!t.done+')">'+(t.done?'<span style="font-size:10px;color:#000">✓</span>':'')+'</div>'+
+      '<div class="ti2"><strong style="'+(t.done?'text-decoration:line-through;opacity:.5':'')+'">'+escHtml(t.text)+'</strong>'+
+      (t.createdByName?'<small style="display:block;color:#9C9282;font-size:10px">by '+escHtml(t.createdByName)+'</small>':'')+'</div>'+
+      '<button class="ib gh" style="width:26px;height:26px;font-size:12px" onclick="deleteTask(\''+t.id+'\')" title="Delete">✕</button>'+
+      '</div>';
+  }).join('');
+}
+
+
 function toggleVoice(){
   if(voiceOn){leaveVoice();return;}
   navigator.mediaDevices.getUserMedia({audio:true,video:false})
