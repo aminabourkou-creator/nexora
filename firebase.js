@@ -27,13 +27,7 @@ export const auth = getAuth(fbApp);
 export const db = getFirestore(fbApp);
 export const googleProvider = new GoogleAuthProvider();
 
-// Persist login across browser restarts
-export let persistenceReady = false;
-try {
-  await setPersistence(auth, browserLocalPersistence);
-  persistenceReady = true;
-} catch (e) {
-  console.warn('⚠️ Persistence setup warning:', e.message);
-  // لا نوقف التطبيق — حتى بدون persistence سيعمل التطبيق
-  persistenceReady = true;
-}
+// Setup persistence (non-blocking — no await at top level)
+setPersistence(auth, browserLocalPersistence).catch(e => {
+  console.warn('Persistence setup failed:', e.message);
+});

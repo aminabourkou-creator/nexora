@@ -19,7 +19,7 @@ export const state = {
   micMuted: false,
   localStream: null,
   authTab: 'in',
-  explicitLogout: false, // تتبع هل تم logout صراحة أم لا
+  userLoaded: false, // Track if auth state has been checked
 };
 
 // Read invite params from the URL once at startup (same behavior as before).
