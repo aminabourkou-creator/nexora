@@ -542,6 +542,7 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
     <nav class="sb-nav">
       <div class="nrow on" onclick="navTo(this)"><span class="ni">🏠</span><span class="nl">Dashboard</span></div>
       <div class="nrow" onclick="navTo(this)"><span class="ni">🚪</span><span class="nl">My Rooms</span></div>
+      <div class="nrow" onclick="navTo(this);openM('friends')"><span class="ni">👥</span><span class="nl">الأصدقاء</span><span class="nbadge" id="friendReqBadge" style="display:none;background:#ff6b6b">0</span></div>
       <div class="nrow" onclick="navTo(this);openM('profile')"><span class="ni">👤</span><span class="nl">Profile</span></div>
       <div class="nrow" onclick="navTo(this);openM('profile')"><span class="ni">⚙️</span><span class="nl">Settings</span></div>
     </nav>
@@ -752,6 +753,50 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
     <h2>Link Expired</h2>
     <p>Ask the room owner to generate a new invite link.</p>
     <div class="macts"><button class="bok" onclick="closeM('expired');goAuth()">Go to Login</button></div>
+  </div>
+</div>
+
+<div class="ovl off" id="m-friends">
+  <div class="modal" style="max-width:480px">
+    <h2>👥 الأصدقاء</h2>
+    
+    <!-- تبويبات -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:12px">
+      <button class="tab-btn on" id="tab-list" onclick="switchFriendsTab('list')">قائمة الأصدقاء</button>
+      <button class="tab-btn" id="tab-requests" onclick="switchFriendsTab('requests')">الطلبات <span id="reqCount" style="color:#ff6b6b;margin-left:4px"></span></button>
+      <button class="tab-btn" id="tab-search" onclick="switchFriendsTab('search')">البحث</button>
+    </div>
+
+    <!-- قائمة الأصدقاء -->
+    <div id="friends-list-panel" style="display:block">
+      <div id="friendsList" style="max-height:350px;overflow-y:auto">
+        <div style="text-align:center;color:#9C9282;padding:24px;font-size:14px">لا توجد أصدقاء حالياً</div>
+      </div>
+    </div>
+
+    <!-- الطلبات الواردة -->
+    <div id="friends-requests-panel" style="display:none">
+      <div id="friendRequests" style="max-height:350px;overflow-y:auto">
+        <div style="text-align:center;color:#9C9282;padding:24px;font-size:14px">لا توجد طلبات صداقة</div>
+      </div>
+    </div>
+
+    <!-- البحث عن صديق -->
+    <div id="friends-search-panel" style="display:none">
+      <div class="field" style="margin-bottom:12px">
+        <span class="ico">🔍</span>
+        <input class="ti" id="searchFriendInput" style="padding-left:36px" placeholder="ابحث بـ email أو الاسم" oninput="searchFriends(this.value)"/>
+      </div>
+      <div id="searchResults" style="max-height:350px;overflow-y:auto">
+        <div style="text-align:center;color:#9C9282;padding:24px;font-size:14px">ابدأ بالبحث...</div>
+      </div>
+    </div>
+
+    <div id="friendErr" class="alert"></div>
+
+    <div class="macts">
+      <button class="bcnl" onclick="closeM('friends')">إغلاق</button>
+    </div>
   </div>
 </div>
 

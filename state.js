@@ -19,6 +19,10 @@ export const state = {
   micMuted: false,
   localStream: null,
   authTab: 'in',
+  friends: [],
+  friendRequests: [],
+  friendsUnsub: null,
+  requestsUnsub: null,
 };
 
 // Read invite params from the URL once at startup (same behavior as before).
