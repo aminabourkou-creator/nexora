@@ -7,14 +7,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>Nexora Studio</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0B0A08">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Nexora">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -35,8 +27,6 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
 #app.off{opacity:0;pointer-events:none;}
 #rv{position:fixed;inset:0;z-index:15;display:flex;background:#0B0A08;}
 #rv.off{display:none;}
-#dm{position:fixed;inset:0;z-index:16;display:flex;flex-direction:column;background:#0B0A08;}
-#dm.off{display:none;}
 
 /* TOAST */
 #toasts{position:fixed;bottom:24px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:88vw;}
@@ -457,8 +447,7 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
 @media(max-width:700px){
   .sidebar{position:fixed;transform:translateX(-100%);height:100vh;z-index:30;width:240px!important;}
   .sidebar.open{transform:translateX(0);}
-  .sb-overlay{display:none;}
-  .sb-overlay:not(.off){display:block;}
+  .sb-overlay{display:block;}
   .btn-menu{display:flex;}
   .tb-name{display:none;}
   .rsb{position:fixed;transform:translateX(-100%);z-index:31;width:220px!important;}
@@ -533,7 +522,6 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       Continue with Google
     </button>
     <div class="auth-foot"><span id="aFT">Don't have an account?</span> <a id="aFL" onclick="switchTab('up')">Sign Up</a></div>
-    <div style="text-align:center;margin-top:14px"><a href="./privacy.html" style="color:#9C9282;font-size:11px;text-decoration:underline">Privacy Policy</a></div>
   </div>
 </div>
 
@@ -554,9 +542,6 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
     <nav class="sb-nav">
       <div class="nrow on" onclick="navTo(this)"><span class="ni">🏠</span><span class="nl">Dashboard</span></div>
       <div class="nrow" onclick="navTo(this)"><span class="ni">🚪</span><span class="nl">My Rooms</span></div>
-      <div class="nrow" onclick="navTo(this);openM('friends')"><span class="ni">🤝</span><span class="nl">Friends</span>
-        <span id="frBadge" style="display:none;margin-left:auto;background:#D4AF37;color:#000;font-size:10px;
-          font-weight:800;border-radius:99px;padding:1px 7px">0</span></div>
       <div class="nrow" onclick="navTo(this);openM('profile')"><span class="ni">👤</span><span class="nl">Profile</span></div>
       <div class="nrow" onclick="navTo(this);openM('profile')"><span class="ni">⚙️</span><span class="nl">Settings</span></div>
     </nav>
@@ -572,13 +557,7 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       <button class="btn-menu" id="menuBtn" onclick="openSb()">☰</button>
       <div class="srch"><span class="si">🔍</span><input placeholder="Search rooms..." id="srchInp" oninput="doSearch(this.value)"/></div>
       <div class="tbr">
-        <button class="ib gh" id="installBtn" style="display:none;align-items:center;gap:5px;width:auto;padding:0 12px;font-size:12px" onclick="installApp()" title="Install app">⬇ Install</button>
         <button class="ib pri" onclick="openM('createRoom')" title="New Room">+</button>
-        <div class="nb" style="position:relative">
-          <button class="ib gh" onclick="openM('inbox')" title="Messages">💬</button>
-          <span id="msgBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#D4AF37;color:#000;
-            font-size:9px;font-weight:800;border-radius:99px;padding:1px 5px;min-width:15px;text-align:center;border:2px solid #0B0A08">0</span>
-        </div>
         <div class="nb"><button class="ib gh" onclick="toast('No new notifications','inf')">🔔</button></div>
         <div class="av" id="topAv" style="width:32px;height:32px;font-size:11px;cursor:pointer" onclick="openM('profile')"></div>
         <span class="tb-name" id="topName"></span>
@@ -660,7 +639,6 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       <h4>👥 Invite People</h4>
       <p>Share link to invite</p>
       <button class="binv" onclick="genInvite()">Copy Invite Link</button>
-      <button class="binv" style="margin-top:8px;background:rgba(212,175,55,.12);color:#D4AF37;border:1px solid rgba(212,175,55,.25)" onclick="openRoomInviteFriends()">📤 Send to Friends</button>
     </div>
   </div>
 
@@ -703,25 +681,15 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       </div>
     </div>
     <div id="p-whiteboard" class="ph-panel" style="display:none"><div class="icon">🖊️</div><h3>Whiteboard</h3><p>Collaborative canvas coming soon</p></div>
-    <div id="p-tasks" style="display:none;flex:1;overflow-y:auto;padding:16px">
-      <div style="display:flex;gap:8px;margin-bottom:16px">
-        <input id="newTaskI" class="ti" style="margin-bottom:0;flex:1" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTask()"/>
-        <button class="ib pri" style="width:auto;padding:0 16px" onclick="addTask()">Add</button>
-      </div>
-      <div id="taskPanelList" class="rempty" style="padding:24px 8px">No tasks yet. Add one above!</div>
-    </div>
+    <div id="p-tasks" style="display:none;flex:1;overflow-y:auto;padding:16px"></div>
     <div id="p-files" class="ph-panel" style="display:none"><div class="icon">📁</div><h3>Files</h3><p>File sharing coming soon</p></div>
     <div id="p-links" class="ph-panel" style="display:none"><div class="icon">🔗</div><h3>Links</h3><p>Shared links coming soon</p></div>
     <div id="p-rsettings" style="display:none;flex:1;overflow-y:auto;padding:16px">
       <div class="card" style="padding:16px">
         <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">Room Settings</h3>
-        <div id="rsOwnerRow" style="display:none;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)">
           <div><strong style="font-size:13px">Delete Room</strong><br><small style="color:#9C9282">This cannot be undone</small></div>
           <button style="padding:7px 14px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#fca5a5;font-size:12px;font-weight:700;cursor:pointer" onclick="deleteRoom()">Delete</button>
-        </div>
-        <div id="rsGuestRow" style="display:none;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)">
-          <div><strong style="font-size:13px">Leave Room</strong><br><small style="color:#9C9282">You'll need a new invite to rejoin</small></div>
-          <button style="padding:7px 14px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#fca5a5;font-size:12px;font-weight:700;cursor:pointer" onclick="leaveRoom()">🚪 Leave</button>
         </div>
       </div>
     </div>
@@ -733,8 +701,8 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       <div id="memList"></div>
     </div>
     <div class="rrs">
-      <div class="rrs-hd"><span>Tasks</span><button class="abtn" onclick="rTab('tasks',document.getElementById('rt-tasks'))">+</button></div>
-      <div id="sideTaskList" class="rempty" style="padding:16px 8px">No tasks yet.</div>
+      <div class="rrs-hd"><span>Tasks</span><button class="abtn" onclick="toast('Task creation coming soon!','inf')">+</button></div>
+      <div class="rempty" style="padding:16px 8px">No tasks yet.</div>
     </div>
     <div class="rrs">
       <div class="rrs-hd"><span>Files</span><button class="abtn" onclick="toast('Upload coming soon!','inf')">+</button></div>
@@ -824,81 +792,6 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       <button class="bok" id="pSaveBtn" onclick="saveProfile()">Save</button>
     </div>
     <button class="bcnl" style="width:100%;margin-top:9px;color:#f87171" onclick="doLogout();closeM('profile')">Sign Out</button>
-    <div style="text-align:center;margin-top:12px"><a href="./privacy.html" style="color:#9C9282;font-size:11px;text-decoration:underline">Privacy Policy</a></div>
-  </div>
-</div>
-
-<div class="ovl off" id="m-friends">
-  <div class="modal" style="max-width:400px">
-    <h2>🤝 Friends</h2>
-    <div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08)" id="frTabs">
-      <div class="rtab on" data-ftab="add" onclick="frTab('add')" style="flex:1;justify-content:center">Add</div>
-      <div class="rtab" data-ftab="reqs" onclick="frTab('reqs')" style="flex:1;justify-content:center">Requests<span id="frTabBadge" style="display:none;margin-left:4px;color:#D4AF37">•</span></div>
-      <div class="rtab" data-ftab="list" onclick="frTab('list')" style="flex:1;justify-content:center">Friends</div>
-    </div>
-
-    <div id="fp-add">
-      <div class="field" style="margin-bottom:8px">
-        <span class="ico">🔍</span>
-        <input class="ti" style="padding-left:36px;margin-bottom:0" id="frSearchI" placeholder="Search by @username or email" onkeydown="if(event.key==='Enter')searchFriend()"/>
-      </div>
-      <button class="btn-act" style="width:100%;margin-bottom:10px" onclick="searchFriend()">Search</button>
-      <div id="frSearchResult"></div>
-    </div>
-
-    <div id="fp-reqs" style="display:none;max-height:340px;overflow-y:auto">
-      <div id="frReqList" class="rempty" style="padding:16px 8px">No pending requests.</div>
-    </div>
-
-    <div id="fp-list" style="display:none;max-height:340px;overflow-y:auto">
-      <div id="frFriendList" class="rempty" style="padding:16px 8px">No friends yet. Add one!</div>
-    </div>
-
-    <div class="macts" style="margin-top:14px">
-      <button class="bcnl" style="width:100%" onclick="closeM('friends')">Close</button>
-    </div>
-  </div>
-</div>
-
-<div class="ovl off" id="m-inbox">
-  <div class="modal" style="max-width:400px">
-    <h2>💬 Messages</h2>
-    <p style="margin-bottom:12px">Your conversations with friends.</p>
-    <div id="inboxList" class="rempty" style="padding:20px 8px;max-height:400px;overflow-y:auto">No conversations yet. Add a friend and say hi!</div>
-    <div class="macts" style="margin-top:14px">
-      <button class="bcnl" style="width:100%" onclick="closeM('inbox')">Close</button>
-    </div>
-  </div>
-</div>
-
-<div class="ovl off" id="m-inviteFriends">
-  <div class="modal" style="max-width:400px">
-    <h2>📤 Send to Friends</h2>
-    <p style="margin-bottom:12px">They'll get a direct link in your chat to join "<span id="rifRoomName"></span>".</p>
-    <div id="rifList" class="rempty" style="padding:20px 8px;max-height:320px;overflow-y:auto">No friends yet.</div>
-    <div id="rifErr" class="alert"></div>
-    <div class="macts" style="margin-top:14px">
-      <button class="bcnl" onclick="closeM('inviteFriends')">Cancel</button>
-      <button class="bok" id="rifSendBtn" onclick="sendRoomInviteToFriends()">Send</button>
-    </div>
-  </div>
-</div>
-
-<div id="dm" class="off">
-  <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0">
-    <button class="ib gh" onclick="closeDM()">←</button>
-    <div class="av" id="dmAv" style="width:34px;height:34px;font-size:12px"></div>
-    <div style="flex:1;min-width:0">
-      <strong id="dmName" style="display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#F5EFDD">—</strong>
-      <small id="dmSub" style="color:#9C9282;font-size:11px">@—</small>
-    </div>
-  </div>
-  <div id="dmArea" style="flex:1;overflow-y:auto;padding:16px"></div>
-  <div class="cinp-wrap">
-    <div class="cinp-row">
-      <input id="dmInp" placeholder="Message..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDM();}"/>
-      <button class="sbtn" onclick="sendDM()">➤</button>
-    </div>
   </div>
 </div>
 
@@ -911,45 +804,6 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 // ── INIT ──
-
-// Register service worker so the browser treats this as an installable
-// PWA (required before wrapping it into a real .apk with PWABuilder/Bubblewrap).
-// Also actively clears any old caches from previous versions of this SW,
-// so a device that installed the app earlier can't get stuck serving a
-// stale/broken cached copy of index.html.
-if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js').then(function(reg){
-      reg.update();
-    }).catch(function(e){
-      console.warn('Service worker registration failed:',e);
-    });
-  });
-  if(window.caches&&caches.keys){
-    caches.keys().then(function(keys){
-      keys.forEach(function(k){
-        if(k!=='nexora-shell-v2')caches.delete(k);
-      });
-    }).catch(function(){});
-  }
-}
-
-// Show a native "Install App" prompt when the browser offers it.
-var deferredInstallPrompt=null;
-window.addEventListener('beforeinstallprompt',function(e){
-  e.preventDefault();
-  deferredInstallPrompt=e;
-  var b=$('installBtn');if(b)b.style.display='flex';
-});
-function installApp(){
-  if(!deferredInstallPrompt)return;
-  deferredInstallPrompt.prompt();
-  deferredInstallPrompt.userChoice.finally(function(){
-    deferredInstallPrompt=null;
-    var b=$('installBtn');if(b)b.style.display='none';
-  });
-}
-
 const cfg = {
   apiKey:"AIzaSyCCs7KTPZglhh4TaH8_UYmA_Asnc6n9IyM",
   authDomain:"nexora-studio-62bb9.firebaseapp.com",
@@ -991,7 +845,6 @@ let voiceOn=false,micMuted=false,localStream=null,authTab='in';
 let userProfile={name:'',username:'',bio:'',photoData:''};
 let pendingAvatarData=null;
 const OWNER_EMAIL='aminabenzaram@gmail.com';
-let taskUnsub=null, roomTasks=[];
 
 // Read invite from URL immediately
 (function(){
@@ -1113,8 +966,6 @@ function renderUser(u){
   $('topName').textContent=name;
   $('wMsg').textContent='Welcome, '+name.split(' ')[0]+'! 👋';
   var svipEl=$('svipBadge');if(svipEl)svipEl.style.display=(u.email===OWNER_EMAIL)?'inline-block':'none';
-  startFriendsListeners();
-  startInboxListener();
 }
 
 // ── PROFILE EDIT ──
@@ -1164,301 +1015,6 @@ function saveProfile(){
       closeM('profile');
     }).catch(function(e){alrt('pErr',e.message);})
     .then(function(){btn.disabled=false;btn.textContent=oldTxt;});
-}
-
-// ── FRIENDS SYSTEM ──
-var friendsUnsub=null, reqUnsub=null, myFriends=[], myFriendUids=[];
-
-function frTab(tab){
-  ['add','reqs','list'].forEach(function(t){
-    var panel=$('fp-'+t);if(panel)panel.style.display=(t===tab?'block':'none');
-    var btn=document.querySelector('[data-ftab="'+t+'"]');if(btn)btn.classList.toggle('on',t===tab);
-  });
-}
-
-function startFriendsListeners(){
-  if(!user)return;
-  if(friendsUnsub)friendsUnsub();
-  friendsUnsub=db.collection('users').doc(user.uid).collection('friends')
-    .onSnapshot(function(snap){
-      myFriends=[];myFriendUids=[];
-      snap.forEach(function(d){myFriends.push(d.data());myFriendUids.push(d.id);});
-      renderFriendList();
-    });
-  if(reqUnsub)reqUnsub();
-  reqUnsub=db.collection('friendRequests')
-    .where('toUid','==',user.uid).where('status','==','pending')
-    .onSnapshot(function(snap){
-      var reqs=[];snap.forEach(function(d){reqs.push({id:d.id,...d.data()});});
-      renderRequests(reqs);
-      var b1=$('frBadge'),b2=$('frTabBadge');
-      if(reqs.length){b1.style.display='inline-block';b1.textContent=reqs.length;b2.style.display='inline';}
-      else{b1.style.display='none';b2.style.display='none';}
-    });
-}
-function stopFriendsListeners(){
-  if(friendsUnsub){friendsUnsub();friendsUnsub=null;}
-  if(reqUnsub){reqUnsub();reqUnsub=null;}
-}
-
-function renderRequests(reqs){
-  var el=$('frReqList');
-  if(!reqs.length){el.className='rempty';el.style.padding='16px 8px';el.innerHTML='No pending requests.';return;}
-  el.className='';el.style.padding='0';
-  el.innerHTML=reqs.map(function(r){
-    var init=initials(r.fromName,r.fromEmail);
-    return '<div class="memrow" style="padding:9px 4px">'+
-      '<div class="av" style="width:34px;height:34px;font-size:11px">'+avatarInner(r.fromPhoto,init)+'</div>'+
-      '<div class="meminfo" style="flex:1"><strong>'+escHtml(r.fromName||'User')+'</strong><small>@'+escHtml(r.fromUsername||'')+'</small></div>'+
-      '<button class="ib pri" style="width:30px;height:30px" onclick="acceptRequest(\''+r.id+'\',\''+r.fromUid+'\')" title="Accept">✓</button>'+
-      '<button class="ib gh" style="width:30px;height:30px" onclick="declineRequest(\''+r.id+'\')" title="Decline">✕</button>'+
-      '</div>';
-  }).join('');
-}
-
-function renderFriendList(){
-  var el=$('frFriendList');
-  if(!myFriends.length){el.className='rempty';el.style.padding='16px 8px';el.innerHTML='No friends yet. Add one!';return;}
-  el.className='';el.style.padding='0';
-  el.innerHTML=myFriends.map(function(f){
-    var init=initials(f.name,f.email);
-    return '<div class="memrow" style="padding:9px 4px;cursor:pointer" onclick=\'openDMFromData(this)\' data-friend=\''+
-      JSON.stringify({uid:f.uid,name:f.name,username:f.username,photoData:f.photoData||''}).replace(/'/g,"&#39;")+'\'>'+
-      '<div class="av" style="width:34px;height:34px;font-size:11px">'+avatarInner(f.photoData,init)+'</div>'+
-      '<div class="meminfo" style="flex:1"><strong>'+escHtml(f.name||'User')+'</strong><small>@'+escHtml(f.username||'')+'</small></div>'+
-      '<span style="color:#D4AF37;font-size:16px">💬</span>'+
-      '</div>';
-  }).join('');
-}
-function openDMFromData(el){
-  var d=JSON.parse(el.getAttribute('data-friend'));
-  openDM(d.uid,d);
-  closeM('friends');
-}
-
-function searchFriend(){
-  var q=$('frSearchI').value.trim();
-  var box=$('frSearchResult');
-  if(!q){box.innerHTML='';return;}
-  box.innerHTML='<div style="text-align:center;padding:14px">'+spin()+'</div>';
-  var uname=q.replace(/^@/,'');
-  Promise.all([
-    db.collection('users').where('username','==',uname).limit(1).get(),
-    db.collection('users').where('email','==',q.toLowerCase()).limit(1).get()
-  ]).then(function(results){
-    var doc=null;
-    results.forEach(function(snap){if(!doc&&!snap.empty)doc=snap.docs[0];});
-    if(!doc){box.innerHTML='<div class="rempty" style="padding:14px">No user found.</div>';return;}
-    var d=doc.data();
-    if(doc.id===user.uid){box.innerHTML='<div class="rempty" style="padding:14px">That\'s you!</div>';return;}
-    var already=myFriendUids.indexOf(doc.id)!==-1;
-    var init=initials(d.name,d.email);
-    box.innerHTML='<div class="memrow" style="padding:10px 4px">'+
-      '<div class="av" style="width:36px;height:36px;font-size:12px">'+avatarInner(d.photoData,init)+'</div>'+
-      '<div class="meminfo" style="flex:1"><strong>'+escHtml(d.name||'User')+'</strong><small>@'+escHtml(d.username||'')+'</small></div>'+
-      (already?'<span style="color:#22c55e;font-size:11px">✓ Friends</span>':
-        '<button class="ib pri" style="width:auto;padding:0 12px;font-size:12px" onclick="sendFriendRequest(\''+doc.id+'\')">Add</button>')+
-      '</div>';
-  }).catch(function(e){box.innerHTML='<div class="rempty" style="padding:14px">'+escHtml(e.message)+'</div>';});
-}
-
-function sendFriendRequest(toUid){
-  if(!user||toUid===user.uid)return;
-  var reqId=toUid+'_'+user.uid;
-  db.collection('friendRequests').doc(reqId).set({
-    fromUid:user.uid,fromName:userProfile.name,fromUsername:userProfile.username,
-    fromEmail:user.email,fromPhoto:userProfile.photoData||'',
-    toUid:toUid,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function(){toast('Friend request sent!','ok');searchFriend();})
-    .catch(function(e){toast('Error: '+e.message,'err');});
-}
-
-function acceptRequest(reqId,fromUid){
-  db.collection('friendRequests').doc(reqId).get().then(function(snap){
-    if(!snap.exists)return;
-    var r=snap.data();
-    var batch=db.batch();
-    batch.set(db.collection('users').doc(user.uid).collection('friends').doc(fromUid),{
-      uid:fromUid,name:r.fromName,username:r.fromUsername,email:r.fromEmail,photoData:r.fromPhoto||'',since:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    batch.set(db.collection('users').doc(fromUid).collection('friends').doc(user.uid),{
-      uid:user.uid,name:userProfile.name,username:userProfile.username,email:user.email,photoData:userProfile.photoData||'',since:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    batch.delete(db.collection('friendRequests').doc(reqId));
-    return batch.commit();
-  }).then(function(){toast('Friend added!','ok');}).catch(function(e){toast('Error: '+e.message,'err');});
-}
-function declineRequest(reqId){
-  db.collection('friendRequests').doc(reqId).delete().catch(function(){});
-}
-
-// ── DIRECT MESSAGES ──
-var dmUnsub=null, currentDM=null;
-var inboxUnsub=null, dmReadsUnsub=null;
-var dmReadTimes={}, dmDocs={}, inboxFirstLoad=true;
-
-function dmIdFor(otherUid){
-  return [user.uid,otherUid].sort().join('_');
-}
-function markDMRead(id){
-  if(!user)return;
-  db.collection('users').doc(user.uid).collection('dmReads').doc(id)
-    .set({lastReadAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-}
-function openDM(otherUid,data){
-  currentDM={uid:otherUid,name:data.name,username:data.username,photoData:data.photoData||''};
-  var init=initials(data.name,data.email);
-  $('dmAv').innerHTML=avatarInner(data.photoData,init);
-  $('dmName').textContent=data.name||'User';
-  $('dmSub').textContent='@'+(data.username||'');
-  $('dmArea').innerHTML='';
-  $('dm').classList.remove('off');
-  var id=dmIdFor(otherUid);
-  db.collection('dms').doc(id).set({
-    participants:[user.uid,otherUid],
-    names:Object.assign({},dmDocs[id]&&dmDocs[id].names,(function(){var o={};o[user.uid]=userProfile.name;o[otherUid]=data.name;return o;})()),
-    photos:(function(){var o={};o[user.uid]=userProfile.photoData||'';o[otherUid]=data.photoData||'';return o;})(),
-    usernames:(function(){var o={};o[user.uid]=userProfile.username;o[otherUid]=data.username;return o;})()
-  },{merge:true});
-  if(dmUnsub)dmUnsub();
-  dmUnsub=db.collection('dms').doc(id).collection('messages').orderBy('timestamp','asc')
-    .onSnapshot(function(snap){
-      var area=$('dmArea');area.innerHTML='';
-      snap.forEach(function(d){addDMMsg({id:d.id,...d.data()});});
-      area.scrollTop=area.scrollHeight;
-      markDMRead(id);
-    });
-}
-function closeDM(){
-  if(dmUnsub){dmUnsub();dmUnsub=null;}
-  currentDM=null;
-  $('dm').classList.add('off');
-}
-function addDMMsg(m){
-  var area=$('dmArea');
-  var own=m.senderId===(user&&user.uid);
-  var bodyHtml;
-  if(m.type==='attachment'){
-    var safeName=escHtml(m.fileName||'file');
-    if(m.fileType==='image'){
-      bodyHtml='<a href="'+m.fileData+'" download="'+safeName+'" style="display:block"><img src="'+m.fileData+'" style="max-width:200px;max-height:200px;border-radius:10px;display:block"/></a>';
-    } else {
-      bodyHtml='<a href="'+m.fileData+'" download="'+safeName+'" style="color:#D4AF37">📄 '+safeName+'</a>';
-    }
-  } else if(m.type==='invite'){
-    bodyHtml='<div style="min-width:200px">'+
-      '<div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">'+
-      '<div style="width:36px;height:36px;border-radius:10px;background:rgba(212,175,55,.14);display:flex;align-items:center;justify-content:center;font-size:18px">'+(m.roomEmoji||'🤖')+'</div>'+
-      '<div><strong style="font-size:13px;display:block">'+escHtml(m.roomName||'Room')+'</strong><small style="color:#9C9282">Private room invite</small></div>'+
-      '</div>'+
-      '<a href="'+m.inviteUrl+'" onclick="return followRoomInvite(event,\''+m.inviteUrl+'\')" style="display:block;text-align:center;padding:9px;border-radius:9px;background:linear-gradient(135deg,#D4AF37,#B08D2B);color:#000;font-weight:700;font-size:12px;text-decoration:none">Join Room →</a>'+
-      '</div>';
-  } else { bodyHtml=fmt(m.text); }
-  var d=document.createElement('div');
-  d.style.cssText='display:flex;'+(own?'justify-content:flex-end':'justify-content:flex-start')+';margin-bottom:8px';
-  d.innerHTML='<div class="bubble'+(own?' own':'')+'" style="max-width:75%">'+bodyHtml+
-    '<div style="font-size:9px;opacity:.55;margin-top:3px">'+fmtTime(m.timestamp)+'</div></div>';
-  area.appendChild(d);
-}
-function followRoomInvite(ev,url){
-  ev.preventDefault();
-  closeDM();
-  history.pushState({},'',url);
-  invCode=new URLSearchParams(location.search).get('invite');
-  invRoomId=new URLSearchParams(location.search).get('room');
-  show('join');
-  checkInvite();
-  return false;
-}
-function sendDM(){
-  var inp=$('dmInp');var text=inp.value.trim();
-  if(!text||!currentDM||!user)return;
-  inp.value='';
-  var id=dmIdFor(currentDM.uid);
-  db.collection('dms').doc(id).set({
-    participants:[user.uid,currentDM.uid],lastMsg:text,lastSenderId:user.uid,
-    lastAt:firebase.firestore.FieldValue.serverTimestamp()
-  },{merge:true});
-  db.collection('dms').doc(id).collection('messages').add({
-    senderId:user.uid,senderName:userProfile.name,text:text,type:'text',
-    timestamp:firebase.firestore.FieldValue.serverTimestamp()
-  }).catch(function(e){toast('Send failed: '+e.message,'err');});
-}
-
-// ── MESSAGES INBOX (conversation list + unread badge + toast) ──
-function startInboxListener(){
-  if(!user)return;
-  inboxFirstLoad=true;
-  if(dmReadsUnsub)dmReadsUnsub();
-  dmReadsUnsub=db.collection('users').doc(user.uid).collection('dmReads')
-    .onSnapshot(function(snap){
-      snap.forEach(function(d){dmReadTimes[d.id]=d.data().lastReadAt;});
-      renderInbox();
-    });
-  if(inboxUnsub)inboxUnsub();
-  inboxUnsub=db.collection('dms').where('participants','array-contains',user.uid)
-    .orderBy('lastAt','desc')
-    .onSnapshot(function(snap){
-      snap.docChanges().forEach(function(ch){
-        var d=ch.doc.data();
-        if(!inboxFirstLoad&&(ch.type==='added'||ch.type==='modified')&&d.lastSenderId&&d.lastSenderId!==user.uid){
-          var openId=currentDM?dmIdFor(currentDM.uid):null;
-          if(ch.doc.id!==openId){
-            var nm=(d.names&&d.names[d.lastSenderId])||'Someone';
-            toast('💬 '+nm+': '+(d.lastMsg||'').slice(0,60),'inf');
-          }
-        }
-      });
-      dmDocs={};
-      snap.forEach(function(d){dmDocs[d.id]={id:d.id,...d.data()};});
-      inboxFirstLoad=false;
-      renderInbox();
-    },function(err){
-      console.error('Inbox query error:',err);
-      toast('Messages inbox error: '+err.message,'err');
-    });
-}
-function stopInboxListener(){
-  if(inboxUnsub){inboxUnsub();inboxUnsub=null;}
-  if(dmReadsUnsub){dmReadsUnsub();dmReadsUnsub=null;}
-  dmDocs={};dmReadTimes={};
-}
-function renderInbox(){
-  var list=Object.keys(dmDocs).map(function(k){return dmDocs[k];});
-  var unreadCount=0;
-  list.forEach(function(d){
-    var read=dmReadTimes[d.id];
-    var isUnread=d.lastSenderId&&d.lastSenderId!==user.uid&&(!read||(d.lastAt&&d.lastAt.toMillis&&read.toMillis&&d.lastAt.toMillis()>read.toMillis()));
-    d._unread=isUnread;
-    if(isUnread)unreadCount++;
-  });
-  var badge=$('msgBadge');
-  if(badge){badge.style.display=unreadCount?'block':'none';badge.textContent=unreadCount;}
-  var el=$('inboxList');
-  if(!el)return;
-  if(!list.length){el.className='rempty';el.style.padding='20px 8px';el.innerHTML='No conversations yet. Add a friend and say hi!';return;}
-  el.className='';el.style.padding='0';
-  el.innerHTML=list.map(function(d){
-    var otherUid=(d.participants||[]).filter(function(p){return p!==user.uid;})[0];
-    var name=(d.names&&d.names[otherUid])||'User';
-    var uname=(d.usernames&&d.usernames[otherUid])||'';
-    var photo=(d.photos&&d.photos[otherUid])||'';
-    var init=initials(name,'');
-    var dataObj={uid:otherUid,name:name,username:uname,photoData:photo};
-    return '<div class="memrow" style="padding:9px 4px;cursor:pointer" onclick=\'openInboxConvo(this)\' data-conv=\''+
-      JSON.stringify(dataObj).replace(/'/g,"&#39;")+'\'>'+
-      '<div class="av" style="width:36px;height:36px;font-size:12px">'+avatarInner(photo,init)+'</div>'+
-      '<div class="meminfo" style="flex:1;min-width:0"><strong>'+escHtml(name)+
-      (d._unread?' <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#D4AF37;margin-left:4px"></span>':'')+
-      '</strong><small style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px">'+
-      escHtml(d.lastMsg||'')+'</small></div>'+
-      '</div>';
-  }).join('');
-}
-function openInboxConvo(el){
-  var d=JSON.parse(el.getAttribute('data-conv'));
-  closeM('inbox');
-  openDM(d.uid,d);
 }
 
 
@@ -1524,10 +1080,6 @@ function forgotPw(){
 function doLogout(){
   if(chatUnsub)chatUnsub();if(memUnsub)memUnsub();
   if(voiceOn)leaveVoice();
-  stopFriendsListeners();
-  stopInboxListener();
-  if(dmUnsub){dmUnsub();dmUnsub=null;}
-  $('dm').classList.add('off');currentDM=null;
   auth.signOut();rooms=[];room=null;show('auth');
 }
 
@@ -1566,24 +1118,15 @@ function openRoom(id){
     $('rvDesc').textContent=rd.desc||'';
     $('rvId').textContent='#'+rd.id.slice(0,8);
     document.title=rd.name+' — Nexora';
-    var isOwner=rd.ownerId===user.uid;
-    var ownerRow=$('rsOwnerRow'),guestRow=$('rsGuestRow');
-    if(ownerRow)ownerRow.style.display=isOwner?'flex':'none';
-    if(guestRow)guestRow.style.display=isOwner?'none':'flex';
     rTab('chat',document.getElementById('rt-chat'));
     show('rv');
-    db.collection('rooms').doc(id).collection('members').doc(user.uid).get().then(function(mSnap){
-      var since=(mSnap.exists&&mSnap.data().joinedAt)?mSnap.data().joinedAt:null;
-      subscribeChat(id,since);
-    }).catch(function(){subscribeChat(id);});
+    subscribeChat(id);
     subscribeMem(id);
-    subscribeTasks(id);
   });
 }
 
 function backDash(){
   if(chatUnsub)chatUnsub();if(memUnsub)memUnsub();
-  if(taskUnsub){taskUnsub();taskUnsub=null;}
   if(voiceOn)leaveVoice();
   room=null;document.title='Nexora Studio';show('app');
 }
@@ -1717,54 +1260,9 @@ function createRoom(){
 function deleteRoom(){
   if(!room||room.ownerId!==user.uid){toast('Only owner can delete','err');return;}
   if(!confirm('Delete "'+room.name+'"? This cannot be undone.'))return;
-  var rid=room.id;
-  wipeRoomMessages(rid).then(function(){
-    return db.collection('rooms').doc(rid).collection('members').get();
-  }).then(function(snap){
-    var batch=db.batch();
-    snap.forEach(function(d){batch.delete(d.ref);});
-    return snap.empty?Promise.resolve():batch.commit();
-  }).then(function(){
-    return db.collection('rooms').doc(rid).delete();
-  }).then(function(){toast('Room deleted','ok');backDash();})
+  db.collection('rooms').doc(room.id).delete()
+    .then(function(){toast('Room deleted','ok');backDash();})
     .catch(function(e){toast('Error: '+e.message,'err');});
-}
-
-function leaveRoom(){
-  if(!room||!user)return;
-  if(room.ownerId===user.uid){toast('Owners cannot leave — delete the room instead','err');return;}
-  if(!confirm('Leave "'+room.name+'"? You will need a new invite to rejoin, and you won\'t see the old messages if you do.'))return;
-  var rid=room.id,rname=room.name;
-  db.collection('rooms').doc(rid).update({
-    members:firebase.firestore.FieldValue.arrayRemove(user.uid)
-  }).then(function(){
-    return db.collection('rooms').doc(rid).collection('members').doc(user.uid).delete();
-  }).then(function(){
-    return db.collection('rooms').doc(rid).collection('messages').add({
-      senderId:'system',senderName:'System',
-      text:(userProfile.name||user.email)+' left the room.',
-      type:'system',timestamp:firebase.firestore.FieldValue.serverTimestamp()
-    });
-  }).then(function(){
-    toast('Left "'+rname+'"','ok');
-    backDash();
-  }).catch(function(e){toast('Error: '+e.message,'err');});
-}
-
-// Deletes every message in a room (Firestore batches are capped at 500 writes).
-function wipeRoomMessages(rid){
-  return db.collection('rooms').doc(rid).collection('messages').get().then(function(snap){
-    if(snap.empty)return;
-    var docs=snap.docs,i=0;
-    function nextBatch(){
-      if(i>=docs.length)return Promise.resolve();
-      var batch=db.batch();
-      docs.slice(i,i+450).forEach(function(d){batch.delete(d.ref);});
-      i+=450;
-      return batch.commit().then(nextBatch);
-    }
-    return nextBatch();
-  });
 }
 
 // ── INVITE ──
@@ -1786,61 +1284,6 @@ function genInvite(){
   }).catch(function(e){$('invUrl').textContent='Error: '+e.message;});
 }
 function cpyInv(){navigator.clipboard.writeText(invUrl).then(function(){toast('Link copied!','ok');});}
-
-// ── SEND ROOM INVITE TO FRIENDS (via DM) ──
-function openRoomInviteFriends(){
-  if(!room){toast('No room selected','err');return;}
-  calrt('rifErr');
-  $('rifRoomName').textContent=room.name;
-  openM('inviteFriends');
-  var el=$('rifList');
-  if(!myFriends.length){el.className='rempty';el.style.padding='20px 8px';el.innerHTML='No friends yet. Add some from the Friends tab first.';return;}
-  el.className='';el.style.padding='0';
-  el.innerHTML=myFriends.map(function(f){
-    var init=initials(f.name,f.email);
-    return '<label class="memrow" style="padding:8px 4px;cursor:pointer">'+
-      '<input type="checkbox" class="rif-chk" value="'+f.uid+'" style="width:18px;height:18px;flex-shrink:0;accent-color:#D4AF37;-webkit-appearance:checkbox;appearance:auto;margin-right:2px;cursor:pointer"/>'+
-      '<div class="av" style="width:32px;height:32px;font-size:11px">'+avatarInner(f.photoData,init)+'</div>'+
-      '<div class="meminfo"><strong>'+escHtml(f.name||'User')+'</strong><small>@'+escHtml(f.username||'')+'</small></div>'+
-      '</label>';
-  }).join('');
-}
-function sendRoomInviteToFriends(){
-  var checked=Array.prototype.slice.call(document.querySelectorAll('.rif-chk:checked')).map(function(c){return c.value;});
-  if(!checked.length){alrt('rifErr','Pick at least one friend.');return;}
-  var btn=$('rifSendBtn');btn.disabled=true;var old=btn.textContent;btn.innerHTML=spin();
-  var code=genCode(16);
-  var exp=new Date(Date.now()+60*60*1000);
-  db.collection('invites').doc(code).set({
-    roomId:room.id,roomName:room.name,inviteCode:code,
-    createdBy:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp(),
-    expiresAt:firebase.firestore.Timestamp.fromDate(exp),status:'active'
-  }).then(function(){
-    var url=location.origin+location.pathname+'?invite='+code+'&room='+room.id;
-    var sends=checked.map(function(uid){
-      var dmId=dmIdFor(uid);
-      var friendData=myFriends.filter(function(f){return f.uid===uid;})[0]||{};
-      return db.collection('dms').doc(dmId).set({
-        participants:[user.uid,uid],lastMsg:'📨 Room invite: '+room.name,lastSenderId:user.uid,
-        lastAt:firebase.firestore.FieldValue.serverTimestamp(),
-        names:(function(){var o={};o[user.uid]=userProfile.name;o[uid]=friendData.name;return o;})(),
-        photos:(function(){var o={};o[user.uid]=userProfile.photoData||'';o[uid]=friendData.photoData||'';return o;})(),
-        usernames:(function(){var o={};o[user.uid]=userProfile.username;o[uid]=friendData.username;return o;})()
-      },{merge:true}).then(function(){
-        return db.collection('dms').doc(dmId).collection('messages').add({
-          senderId:user.uid,senderName:userProfile.name,type:'invite',
-          roomId:room.id,roomName:room.name,roomEmoji:room.emoji||'🤖',inviteUrl:url,
-          timestamp:firebase.firestore.FieldValue.serverTimestamp()
-        });
-      });
-    });
-    return Promise.all(sends);
-  }).then(function(){
-    toast('Invite sent to '+checked.length+' friend(s)!','ok');
-    closeM('inviteFriends');
-  }).catch(function(e){alrt('rifErr',e.message);})
-    .then(function(){btn.disabled=false;btn.textContent=old;});
-}
 
 // ── INVITE JOIN FLOW ──
 function checkInvite(){
@@ -1923,26 +1366,15 @@ function joinRoom(){
 function cancelJoin(){invCode=null;invRoomId=null;history.replaceState({},'',location.pathname);show('auth');}
 
 // ── CHAT ──
-function subscribeChat(rid,sinceTs){
+function subscribeChat(rid){
   if(chatUnsub)chatUnsub();
-  var q=db.collection('rooms').doc(rid).collection('messages').orderBy('timestamp','asc');
-  if(sinceTs)q=q.where('timestamp','>=',sinceTs);
-  chatUnsub=q.onSnapshot(function(snap){
+  chatUnsub=db.collection('rooms').doc(rid).collection('messages')
+    .orderBy('timestamp','asc')
+    .onSnapshot(function(snap){
       var ca=$('chatArea');ca.innerHTML='';
       snap.forEach(function(d){addMsg(Object.assign({id:d.id},d.data()));});
       ca.scrollTop=ca.scrollHeight;
       $('sMsgs').textContent=snap.size;
-    },function(err){
-      console.error('Chat query error:',err);
-      // Fall back to unfiltered if a composite index isn't ready yet.
-      if(chatUnsub)chatUnsub();
-      chatUnsub=db.collection('rooms').doc(rid).collection('messages').orderBy('timestamp','asc')
-        .onSnapshot(function(snap){
-          var ca=$('chatArea');ca.innerHTML='';
-          snap.forEach(function(d){addMsg(Object.assign({id:d.id},d.data()));});
-          ca.scrollTop=ca.scrollHeight;
-          $('sMsgs').textContent=snap.size;
-        });
     });
 }
 
@@ -2011,40 +1443,23 @@ function callAI(userMsg,rid){
       var hist=[];
       snap.forEach(function(d){
         var m=d.data();
-        if(hist.length>=12)return;
-        if(m.type==='system'||m.type==='invite')return;
-        var role=m.senderId==='ai-nexora'?'assistant':'user';
-        if(m.type==='attachment'&&m.fileType==='image'&&m.fileData){
-          var match=/^data:([^;]+);base64,(.+)$/.exec(m.fileData);
-          if(match){
-            hist.unshift({role:role,parts:[
-              {text:'[image attached: '+(m.fileName||'photo')+']'},
-              {image:{mimeType:match[1],data:match[2]}}
-            ]});
-            return;
-          }
-        }
-        if(m.type==='attachment'){
-          hist.unshift({role:role,parts:[{text:'[sent a file: '+(m.fileName||'file')+']'}]});
-          return;
-        }
-        if(m.text)hist.unshift({role:role,parts:[{text:m.text}]});
+        if(m.type!=='system'&&hist.length<10)
+          hist.unshift({role:m.senderId==='ai-nexora'?'assistant':'user',content:m.text});
       });
       return db.collection('rooms').doc(rid).collection('messages').add({
         senderId:'ai-nexora',senderName:'Nexora AI',
         text:'✦ Thinking...',type:'ai',timestamp:firebase.firestore.FieldValue.serverTimestamp()
       }).then(function(tRef){
-        var sys='You are Nexora AI inside the private room "'+(room?room.name:'')+'"'+
-          (room&&room.desc?' ('+room.desc+')':'')+
-          '. The Tasks and Files panels in this app are not wired to real data yet (currently always empty placeholders) — '+
-          'if asked about tasks or files, say honestly that none have been added yet rather than inventing any. '+
-          'If the recent messages include an attached image, you can see it directly — describe or answer questions about it. Be concise and helpful.';
-        return fetch('/api/ai',{
+        return fetch('https://api.anthropic.com/v1/messages',{
           method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({system:sys,messages:hist.slice(-10)})
+          body:JSON.stringify({
+            model:'claude-sonnet-4-6',max_tokens:800,
+            system:'You are Nexora AI inside the private room "'+(room?room.name:'')+'". Be concise and helpful.',
+            messages:hist.slice(-8)
+          })
         }).then(function(r){return r.json();})
           .then(function(data){
-            var reply=data.text||('Error: '+(data.error||'no response'));
+            var reply=(data.content&&data.content[0]&&data.content[0].text)||'I could not respond right now.';
             return tRef.update({text:reply});
           }).catch(function(){return tRef.update({text:'Error reaching AI. Try again.'});});
       });
@@ -2073,62 +1488,7 @@ function subscribeMem(rid){
     });
 }
 
-// ── TASKS ──
-function subscribeTasks(rid){
-  if(taskUnsub)taskUnsub();
-  taskUnsub=db.collection('rooms').doc(rid).collection('tasks').orderBy('createdAt','asc')
-    .onSnapshot(function(snap){
-      roomTasks=[];
-      snap.forEach(function(d){roomTasks.push({id:d.id,...d.data()});});
-      renderTasksSidebar();
-      renderTasksPanel();
-    },function(err){console.error('Tasks query error:',err);});
-}
-function addTask(){
-  var inp=$('newTaskI');var text=inp.value.trim();
-  if(!text||!room||!user)return;
-  inp.value='';
-  db.collection('rooms').doc(room.id).collection('tasks').add({
-    text:text,done:false,createdBy:user.uid,createdByName:userProfile.name,
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  }).catch(function(e){toast('Error: '+e.message,'err');});
-}
-function toggleTask(id,done){
-  if(!room)return;
-  db.collection('rooms').doc(room.id).collection('tasks').doc(id).update({done:!done})
-    .catch(function(e){toast('Error: '+e.message,'err');});
-}
-function deleteTask(id){
-  if(!room)return;
-  db.collection('rooms').doc(room.id).collection('tasks').doc(id).delete()
-    .catch(function(e){toast('Error: '+e.message,'err');});
-}
-function renderTasksSidebar(){
-  var el=$('sideTaskList');if(!el)return;
-  if(!roomTasks.length){el.className='rempty';el.style.padding='16px 8px';el.innerHTML='No tasks yet.';return;}
-  el.className='';el.style.padding='0';
-  el.innerHTML=roomTasks.slice(0,6).map(function(t){
-    return '<div class="trow">'+
-      '<div class="tchk'+(t.done?' done':'')+'" onclick="toggleTask(\''+t.id+'\','+!!t.done+')">'+(t.done?'<span style="font-size:10px;color:#000">✓</span>':'')+'</div>'+
-      '<div class="ti2"><strong style="'+(t.done?'text-decoration:line-through;opacity:.5':'')+'">'+escHtml(t.text)+'</strong></div>'+
-      '</div>';
-  }).join('');
-}
-function renderTasksPanel(){
-  var el=$('taskPanelList');if(!el)return;
-  if(!roomTasks.length){el.className='rempty';el.style.padding='24px 8px';el.innerHTML='No tasks yet. Add one above!';return;}
-  el.className='';el.style.padding='0';
-  el.innerHTML=roomTasks.map(function(t){
-    return '<div class="trow">'+
-      '<div class="tchk'+(t.done?' done':'')+'" onclick="toggleTask(\''+t.id+'\','+!!t.done+')">'+(t.done?'<span style="font-size:10px;color:#000">✓</span>':'')+'</div>'+
-      '<div class="ti2"><strong style="'+(t.done?'text-decoration:line-through;opacity:.5':'')+'">'+escHtml(t.text)+'</strong>'+
-      (t.createdByName?'<small style="display:block;color:#9C9282;font-size:10px">by '+escHtml(t.createdByName)+'</small>':'')+'</div>'+
-      '<button class="ib gh" style="width:26px;height:26px;font-size:12px" onclick="deleteTask(\''+t.id+'\')" title="Delete">✕</button>'+
-      '</div>';
-  }).join('');
-}
-
-
+// ── VOICE ──
 function toggleVoice(){
   if(voiceOn){leaveVoice();return;}
   navigator.mediaDevices.getUserMedia({audio:true,video:false})
@@ -2181,11 +1541,6 @@ function openM(id){
     $('pBioCt').textContent=(userProfile.bio||'').length;
     $('pAv').innerHTML=avatarInner(userProfile.photoData,initials(userProfile.name,user&&user.email));
     $('pEmail').textContent=(user&&user.email)||'';
-  }
-  if(id==='friends'){
-    frTab('add');
-    $('frSearchI').value='';
-    $('frSearchResult').innerHTML='';
   }
 }
 function closeM(id){var el=$('m-'+id);if(el)el.classList.add('off');}

@@ -1,118 +1,43 @@
 /* ============================================================
-   NEXORA STUDIO — app.js  (entry point, loaded as type="module")
-   1. Listens to Firebase auth state and routes to the right screen.
-   2. Draws the animated background particle canvas.
-   3. Exposes every function the HTML's onclick="..." attributes
-      need onto `window`, since ES module functions are not global
-      by default. This is the only file that touches `window`.
+   NEXORA STUDIO — utils.js
+   Small, dependency-free helper functions shared by every module:
+   DOM shortcut, formatting, error-message mapping, ID generation.
    ============================================================ */
 
-import { auth } from './firebase.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+export const $ = id => document.getElementById(id);
 
-import { $ } from './utils.js';
-import { state } from './state.js';
-import {
-  toast, show, goAuth, switchTab, openM, closeM, initModalOverlayClicks,
-  toggleSb, openSb, closeSb, openRsb, closeRsb, navTo, rTab, tCheck, doSearch
-} from './ui.js';
-import { renderUser, doAuth, doGoogle, forgotPw, doLogout } from './auth.js';
-import {
-  loadRooms, renderRooms, openRoom, backDash, cpyId,
-  initEmojiGrid, selEmoji, createRoom, deleteRoom,
-  genInvite, cpyInv, checkInvite, joinRoom, cancelJoin
-} from './rooms.js';
-import { sendMsg } from './chat.js';
-import { toggleVoice, toggleMic, leaveVoice } from './voice.js';
+export function initials(name, email) {
+  if (name?.trim()) return name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  return (email || 'U')[0].toUpperCase();
+}
 
-// ── Auth state routing (same logic as the original single file) ──
-onAuthStateChanged(auth, async u => {
-  if (u) {
-    state.user = u;
-    renderUser(u);
-    if (state.invCode && state.invRoomId) {
-      show('join');
-      await checkInvite();
-    } else {
-      show('app');
-      await loadRooms();
-    }
-  } else {
-    state.user = null;
-    if (state.invCode) show('join');
-    else if (!$('splash').classList.contains('off')) { /* stay on splash */ }
-    else show('auth');
-  }
-});
+export function fmtTime(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
 
-// ── One-time UI wiring ──
-initModalOverlayClicks();
-initEmojiGrid();
+export function errMsg(code) {
+  const m = {
+    'auth/user-not-found': 'No account found with this email.',
+    'auth/wrong-password': 'Incorrect password.',
+    'auth/invalid-credential': 'Invalid email or password.',
+    'auth/email-already-in-use': 'Email already registered.',
+    'auth/weak-password': 'Password needs at least 6 characters.',
+    'auth/too-many-requests': 'Too many attempts. Please wait.',
+    'auth/network-request-failed': 'Network error.',
+    'auth/popup-closed-by-user': 'Sign-in popup closed.',
+    'auth/invalid-email': 'Invalid email address.'
+  };
+  return m[code] || 'Something went wrong. Please try again.';
+}
 
-// ── Expose functions referenced by inline onclick="" in index.html ──
-window.toast = toast;
-window.goAuth = goAuth;
-window.switchTab = switchTab;
-window.openM = openM;
-window.closeM = closeM;
-window.toggleSb = toggleSb;
-window.openSb = openSb;
-window.closeSb = closeSb;
-window.openRsb = openRsb;
-window.closeRsb = closeRsb;
-window.navTo = navTo;
-window.rTab = rTab;
-window.tCheck = tCheck;
-window.doSearch = v => doSearch(v, renderRooms);
+export function genCode(n = 14) {
+  return Array.from(crypto.getRandomValues(new Uint8Array(n)))
+    .map(b => b.toString(36)).join('').slice(0, n);
+}
 
-window.doAuth = doAuth;
-window.doGoogle = doGoogle;
-window.forgotPw = forgotPw;
-window.doLogout = doLogout;
-
-window.openRoom = openRoom;
-window.backDash = backDash;
-window.cpyId = cpyId;
-window.selEmoji = selEmoji;
-window.createRoom = createRoom;
-window.deleteRoom = deleteRoom;
-window.genInvite = genInvite;
-window.cpyInv = cpyInv;
-window.joinRoom = joinRoom;
-window.cancelJoin = cancelJoin;
-
-window.sendMsg = sendMsg;
-
-window.toggleVoice = toggleVoice;
-window.toggleMic = toggleMic;
-window.leaveVoice = leaveVoice;
-
-// ── Animated background particles ──
-const cv = $('bg'), cx = cv.getContext('2d');
-cv.width = window.innerWidth; cv.height = window.innerHeight;
-window.addEventListener('resize', () => { cv.width = window.innerWidth; cv.height = window.innerHeight; });
-
-const pts = Array.from({ length: 55 }, () => ({
-  x: Math.random() * cv.width, y: Math.random() * cv.height,
-  vx: (Math.random() - .5) * .3, vy: (Math.random() - .5) * .3,
-  r: Math.random() * 1.7 + .4, a: Math.random() * .3 + .07
-}));
-
-(function draw() {
-  cx.clearRect(0, 0, cv.width, cv.height);
-  pts.forEach(p => {
-    p.x += p.vx; p.y += p.vy;
-    if (p.x < 0 || p.x > cv.width) p.vx *= -1;
-    if (p.y < 0 || p.y > cv.height) p.vy *= -1;
-    cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    cx.fillStyle = `rgba(0,217,255,${p.a})`; cx.fill();
-  });
-  pts.forEach((a, i) => pts.slice(i + 1).forEach(b => {
-    const d = Math.hypot(a.x - b.x, a.y - b.y);
-    if (d < 95) {
-      cx.beginPath(); cx.moveTo(a.x, a.y); cx.lineTo(b.x, b.y);
-      cx.strokeStyle = `rgba(0,217,255,${.055 * (1 - d / 95)})`; cx.lineWidth = .5; cx.stroke();
-    }
-  }));
-  requestAnimationFrame(draw);
-})();
+// Bold (**text**) + newline formatting used in chat bubbles.
+export function fmt(t) {
+  return (t || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+}
