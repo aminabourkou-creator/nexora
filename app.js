@@ -30,10 +30,14 @@ import {
   removeFriend, switchFriendsTab, cleanupFriends 
 } from './friends.js';
 
-// ── Auth state routing (same logic as the original single file) ──
+// ── Auth state routing with persistence support ──
+let authChecked = false;
 onAuthStateChanged(auth, async u => {
+  authChecked = true;
+  
   if (u) {
     state.user = u;
+    state.explicitLogout = false; // جلسة نشطة
     renderUser(u);
     subscribeFriends();
     subscribeFriendRequests();

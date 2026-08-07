@@ -72,6 +72,7 @@ export async function doLogout() {
   if (state.chatUnsub) state.chatUnsub();
   if (state.memUnsub) state.memUnsub();
   cleanupFriends();
+  state.explicitLogout = true; // تسجيل الخروج الصريح
   await signOut(auth);
   state.rooms = []; state.room = null;
   show('auth');

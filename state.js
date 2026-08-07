@@ -23,6 +23,7 @@ export const state = {
   friendRequests: [],
   friendsUnsub: null,
   requestsUnsub: null,
+  explicitLogout: false, // تتبع الخروج الصريح من المستخدم
 };
 
 // Read invite params from the URL once at startup (same behavior as before).
