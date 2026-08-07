@@ -27,7 +27,6 @@ import { toggleVoice, toggleMic, leaveVoice } from './voice.js';
 
 // ── Auth state routing (same logic as the original single file) ──
 onAuthStateChanged(auth, async u => {
-  state.userLoaded = true;
   if (u) {
     state.user = u;
     renderUser(u);

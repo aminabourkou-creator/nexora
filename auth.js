@@ -70,7 +70,6 @@ export async function forgotPw() {
 export async function doLogout() {
   if (state.chatUnsub) state.chatUnsub();
   if (state.memUnsub) state.memUnsub();
-  localStorage.removeItem('isLoggedOut'); // Clear logout flag
   await signOut(auth);
   state.rooms = []; state.room = null;
   show('auth');

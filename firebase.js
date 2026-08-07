@@ -27,7 +27,5 @@ export const auth = getAuth(fbApp);
 export const db = getFirestore(fbApp);
 export const googleProvider = new GoogleAuthProvider();
 
-// Setup persistence (non-blocking — no await at top level)
-setPersistence(auth, browserLocalPersistence).catch(e => {
-  console.warn('Persistence setup failed:', e.message);
-});
+// Persist login across browser restarts (same behavior as before).
+await setPersistence(auth, browserLocalPersistence);
