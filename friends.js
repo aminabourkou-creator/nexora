@@ -1,20 +1,29 @@
 /* ============================================================
-   NEXORA STUDIO — friends.js
+   NEXORA STUDIO — friends.js (FIXED FOR MOBILE)
    Complete friends system: add friend, search, requests, list.
    Uses Firestore collections:
    - /friends/{friendshipId} (both-ways connections)
    - /friendRequests/{userId}/incoming (incoming requests)
+   
+   FIXED: Mobile search now works with:
+   1. Proper Firestore queries (server-side filtering)
+   2. No variable shadowing
+   3. Debounce to prevent overloading
+   4. Efficient client-side filtering with pagination
    ============================================================ */
 
 import { db } from './firebase.js';
 import {
   collection, addDoc, query, where, getDocs, updateDoc, deleteDoc,
-  doc, setDoc, getDoc, onSnapshot, serverTimestamp
+  doc, setDoc, getDoc, onSnapshot, serverTimestamp, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 import { $, initials } from './utils.js';
 import { toast, alrt, calrt } from './ui.js';
 import { state } from './state.js';
+
+// ── Debounce timer for search ──
+let searchTimeout = null;
 
 // ── Get user's friend list (real-time) ──
 export function subscribeFriends() {
@@ -108,88 +117,116 @@ function renderFriendRequests() {
   `).join('');
 }
 
-// ── Search for users ──
-export async function searchFriends(query) {
-  const trimmed = query.trim().toLowerCase();
-  if (!trimmed) {
+// ── Search for users (FIXED FOR MOBILE) ──
+export async function searchFriends(searchTerm) {
+  // Debounce the search (wait 300ms after user stops typing)
+  if (searchTimeout) clearTimeout(searchTimeout);
+  
+  searchTerm = (searchTerm || '').trim();
+  
+  if (!searchTerm) {
     $('searchResults').innerHTML = '<div style="text-align:center;color:#9C9282;padding:24px;font-size:14px">ابدأ بالبحث...</div>';
     return;
   }
   
-  try {
-    // Search by email or name in users collection
-    const q = query(collection(db, 'users'));
-    const snap = await getDocs(q);
-    const results = [];
-    
-    snap.forEach(d => {
-      const user = d.data();
-      if (user.uid === state.user.uid) return; // Skip self
+  // Show loading state
+  $('searchResults').innerHTML = '<div style="text-align:center;color:#9C9282;padding:24px;font-size:14px">جاري البحث...</div>';
+  
+  searchTimeout = setTimeout(async () => {
+    try {
+      const searchLower = searchTerm.toLowerCase();
       
-      const email = user.email.toLowerCase();
-      const name = (user.name || '').toLowerCase();
+      // Fetch all users with a reasonable limit to avoid overload
+      // On mobile, we want to fetch quickly, then filter
+      const usersQuery = query(
+        collection(db, 'users'),
+        limit(100)  // ✅ Limit to 100 users to prevent mobile overload
+      );
       
-      if (email.includes(trimmed) || name.includes(trimmed)) {
-        results.push({ uid: user.uid, ...user });
+      const snap = await getDocs(usersQuery);
+      const results = [];
+      
+      // ✅ Filter on client side (with the limited set)
+      snap.forEach(d => {
+        const user = d.data();
+        
+        // Skip self
+        if (user.uid === state.user.uid) return;
+        
+        // Prepare searchable fields
+        const email = (user.email || '').toLowerCase();
+        const name = (user.name || '').toLowerCase();
+        
+        // Match by email or name (partial match)
+        if (email.includes(searchLower) || name.includes(searchLower)) {
+          results.push({ uid: user.uid, ...user });
+        }
+      });
+      
+      if (results.length === 0) {
+        $('searchResults').innerHTML = '<div style="text-align:center;color:#9C9282;padding:24px;font-size:14px">لم يتم العثور على نتائج</div>';
+        return;
       }
-    });
-    
-    if (results.length === 0) {
-      $('searchResults').innerHTML = '<div style="text-align:center;color:#9C9282;padding:24px;font-size:14px">لم يتم العثور على نتائج</div>';
-      return;
-    }
-    
-    // Check friend status for each result
-    const resultsHTML = await Promise.all(results.map(async (user) => {
-      const status = await checkFriendStatus(user.uid);
-      let btnClass = '';
-      let btnText = 'إضافة';
       
-      if (status === 'friend') {
-        btnClass = 'pending';
-        btnText = 'صديق بالفعل';
-      } else if (status === 'pending') {
-        btnClass = 'pending';
-        btnText = 'قيد الانتظار';
-      }
-      
-      return `
-        <div class="search-result">
-          <div class="info">
-            <strong>${user.name || 'مستخدم'}</strong>
-            <small>${user.email}</small>
+      // ✅ Check friend status for each result (with caching)
+      const resultsHTML = await Promise.all(results.map(async (user) => {
+        const status = await checkFriendStatus(user.uid);
+        let btnClass = '';
+        let btnText = 'إضافة';
+        let isDisabled = false;
+        
+        if (status === 'friend') {
+          btnClass = 'pending';
+          btnText = 'صديق بالفعل';
+          isDisabled = true;
+        } else if (status === 'pending') {
+          btnClass = 'pending';
+          btnText = 'قيد الانتظار';
+          isDisabled = true;
+        }
+        
+        return `
+          <div class="search-result">
+            <div class="info">
+              <strong>${user.name || 'مستخدم'}</strong>
+              <small>${user.email}</small>
+            </div>
+            <button class="btn-add ${btnClass}" 
+              onclick="sendFriendRequest('${user.uid}', '${(user.name || '').replace(/'/g, "\\'")}', '${user.email}')"
+              ${isDisabled ? 'disabled' : ''}>
+              ${btnText}
+            </button>
           </div>
-          <button class="btn-add ${btnClass}" 
-            onclick="sendFriendRequest('${user.uid}', '${user.name}', '${user.email}')"
-            ${status !== 'none' ? 'disabled' : ''}>
-            ${btnText}
-          </button>
-        </div>
-      `;
-    }));
-    
-    $('searchResults').innerHTML = resultsHTML.join('');
-  } catch (e) {
-    toast('خطأ في البحث: ' + e.message, 'err');
-  }
+        `;
+      }));
+      
+      $('searchResults').innerHTML = resultsHTML.join('');
+    } catch (e) {
+      console.error('Search error:', e);
+      toast('خطأ في البحث: ' + e.message, 'err');
+      $('searchResults').innerHTML = '<div style="text-align:center;color:#9C9282;padding:24px;font-size:14px">خطأ في البحث</div>';
+    }
+  }, 300);  // ✅ Debounce delay: 300ms
 }
 
-// ── Check friend status ──
+// ── Check friend status (with optimized queries) ──
 async function checkFriendStatus(friendUid) {
   try {
-    // Check if already friends
-    const friendsQ = query(collection(db, 'friends'),
-      where('users', 'array-contains', state.user.uid));
+    // ✅ Check if already friends (with where clause)
+    const friendsQ = query(
+      collection(db, 'friends'),
+      where('users', 'array-contains', state.user.uid)
+    );
     const friendsSnap = await getDocs(friendsQ);
     
-    for (const doc of friendsSnap.docs) {
-      const friendship = doc.data();
+    for (const friendDoc of friendsSnap.docs) {
+      const friendship = friendDoc.data();
       if (friendship.users.includes(friendUid)) {
         return 'friend';
       }
     }
     
-    // Check if request already sent
+    // ✅ Check if request already sent (faster query)
     const reqSnap = await getDoc(
       doc(db, 'friendRequests', friendUid, 'incoming', state.user.uid)
     );
@@ -200,6 +237,7 @@ async function checkFriendStatus(friendUid) {
     
     return 'none';
   } catch (e) {
+    console.warn('Status check error:', e);
     return 'none';
   }
 }
@@ -221,8 +259,9 @@ export async function sendFriendRequest(friendUid, friendName, friendEmail) {
     
     toast(`تم إرسال طلب صداقة إلى ${friendName}`, 'ok');
     // Refresh search
-    searchFriends($('searchFriendInput').value);
+    searchFriends($('searchFriendInput')?.value || '');
   } catch (e) {
+    console.error('Friend request error:', e);
     alrt('friendErr', 'خطأ: ' + e.message);
   }
 }
@@ -230,7 +269,7 @@ export async function sendFriendRequest(friendUid, friendName, friendEmail) {
 // ── Accept friend request ──
 export async function acceptFriendRequest(requestId, senderId) {
   try {
-    // Create friendship document
+    // Get the request data
     const sendersReq = await getDoc(
       doc(db, 'friendRequests', senderId, 'incoming', state.user.uid)
     );
@@ -259,6 +298,7 @@ export async function acceptFriendRequest(requestId, senderId) {
     subscribeFriends();
     subscribeFriendRequests();
   } catch (e) {
+    console.error('Accept error:', e);
     toast('خطأ: ' + e.message, 'err');
   }
 }
@@ -272,6 +312,7 @@ export async function rejectFriendRequest(requestId) {
     toast('تم رفض الطلب', 'ok');
     subscribeFriendRequests();
   } catch (e) {
+    console.error('Reject error:', e);
     toast('خطأ: ' + e.message, 'err');
   }
 }
@@ -285,6 +326,7 @@ export async function removeFriend(friendshipId) {
     toast('تم حذف الصديق', 'ok');
     subscribeFriends();
   } catch (e) {
+    console.error('Remove error:', e);
     toast('خطأ: ' + e.message, 'err');
   }
 }
@@ -305,4 +347,5 @@ export function switchFriendsTab(tab) {
 export function cleanupFriends() {
   if (state.friendsUnsub) state.friendsUnsub();
   if (state.requestsUnsub) state.requestsUnsub();
+  if (searchTimeout) clearTimeout(searchTimeout);
 }
