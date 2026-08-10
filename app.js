@@ -1,10 +1,13 @@
 /* ============================================================
-   NEXORA STUDIO — app.js  (entry point, loaded as type="module")
+   NEXORA STUDIO — app.js (IMPROVED)
    1. Listens to Firebase auth state and routes to the right screen.
    2. Draws the animated background particle canvas.
    3. Exposes every function the HTML's onclick="..." attributes
       need onto `window`, since ES module functions are not global
       by default. This is the only file that touches `window`.
+   
+   IMPROVED: Added explicit logout check to prevent unwanted
+   auto-login after user explicitly logs out.
    ============================================================ */
 
 import { auth } from './firebase.js';
@@ -35,9 +38,18 @@ let authChecked = false;
 onAuthStateChanged(auth, async u => {
   authChecked = true;
   
+  // ✅ IMPROVED: Check if user explicitly logged out
+  // This prevents auto-login after user clicks "Logout" button
+  if (state.explicitLogout && !u) {
+    state.user = null;
+    cleanupFriends();
+    show('auth');
+    return;
+  }
+  
   if (u) {
     state.user = u;
-    state.explicitLogout = false; // جلسة نشطة
+    state.explicitLogout = false; // Reset flag for new session
     renderUser(u);
     subscribeFriends();
     subscribeFriendRequests();

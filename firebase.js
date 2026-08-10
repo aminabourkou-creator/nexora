@@ -1,9 +1,12 @@
 /* ============================================================
-   NEXORA STUDIO — firebase.js
+   NEXORA STUDIO — firebase.js (FIXED)
    Initializes the Firebase app, Auth, and Firestore instances.
    Every other module imports `auth` and `db` from here instead
    of calling initializeApp() again, so there is always exactly
    one Firebase connection for the whole app.
+   
+   FIXED: Removed top-level await that was blocking module load
+   on mobile. Now uses .catch() for non-blocking persistence setup.
    ============================================================ */
 
 import { initializeApp }
@@ -27,14 +30,17 @@ export const auth = getAuth(fbApp);
 export const db = getFirestore(fbApp);
 export const googleProvider = new GoogleAuthProvider();
 
-// Persist login across browser restarts with error handling
+// Persist login across browser restarts using non-blocking .catch() pattern
+// This does NOT block module initialization on mobile
 export let persistenceReady = false;
-try {
-  await setPersistence(auth, browserLocalPersistence);
-  persistenceReady = true;
-  console.log('✅ Session persistence enabled');
-} catch (e) {
-  console.warn('⚠️ Persistence setup warning:', e.message);
-  // Continue anyway - app will work without persistence
-  persistenceReady = true;
-}
+
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    persistenceReady = true;
+    console.log('✅ Session persistence enabled');
+  })
+  .catch(e => {
+    console.warn('⚠️ Persistence setup warning:', e.message);
+    persistenceReady = true; // Mark as ready even if persistence fails
+    // App will work fine without persistence - users just won't stay logged in
+  });
