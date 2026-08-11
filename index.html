@@ -463,6 +463,7 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
   .rtab{padding:10px 10px;font-size:12px;}
 }
 </style>
+<link rel="stylesheet" href="mobile-fix.css">
 </head>
 <body>
 <canvas id="bg"></canvas>
@@ -817,10 +818,10 @@ try{
   firebase.initializeApp(cfg);
   auth = firebase.auth();
   db   = firebase.firestore();
-  // SESSION persistence: stays signed in while this browser tab/session is open,
-  // but a new visitor opening the app (new tab, new browser, after closing) always
-  // sees the sign-in screen instead of automatically landing on someone else's account.
-  auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+  // Use LOCAL persistence on mobile (SESSION has issues), and WAIT for it to complete
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(err){
+    console.warn('Persistence failed, using default:', err.message);
+  });
 }catch(initErr){
   console.error('Firebase init failed:',initErr);
   document.addEventListener('DOMContentLoaded',function(){

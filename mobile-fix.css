@@ -1,0 +1,122 @@
+/* ============================================================
+   NEXORA STUDIO — mobile-fix.css
+   Mobile-specific fixes for button clicks and touch interactions
+   Load this LAST in the HTML, after all other stylesheets
+   ============================================================ */
+
+/* CRITICAL: Ensure all interactive elements are tappable */
+@media (hover: none) and (pointer: coarse) {
+  /* This is a touch device */
+  
+  /* All buttons must be clickable */
+  button, input[type="button"], input[type="submit"], 
+  input[type="reset"], a[role="button"], [role="button"] {
+    pointer-events: auto !important;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(212, 175, 55, 0.2);
+    touch-action: manipulation;
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Ensure NO element blocks clicks */
+  .sb-overlay { pointer-events: none; }
+  .sb-overlay.active { pointer-events: auto; }
+  .rsbOverlay { pointer-events: none; }
+  .rsbOverlay.active { pointer-events: auto; }
+  
+  /* Overlays and modals */
+  .ovl {
+    pointer-events: auto;
+    z-index: 9999;
+  }
+  
+  /* Form inputs must be tappable */
+  input, textarea, select {
+    pointer-events: auto !important;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  /* Fix for iOS Safari input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    letter-spacing: 1px;
+  }
+  
+  /* Fix dropdown/select on mobile */
+  select {
+    min-height: 44px;
+    padding: 10px;
+  }
+  
+  /* Disable all pointer-events: none on interactive elements */
+  button:not(:disabled),
+  input:not(:disabled),
+  a:not([aria-disabled="true"]),
+  [role="button"]:not([aria-disabled="true"]) {
+    pointer-events: auto !important;
+  }
+}
+
+/* General touch optimizations */
+* {
+  -webkit-touch-callout: none;
+}
+
+/* Prevent long-press menu on links/buttons */
+button, a {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Remove tap delay on iOS */
+button, a, input {
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
+}
+
+/* Fix for text selection on buttons */
+.btn-main, .btn-glow, .btn-google, .tab, button {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Ensure disabled buttons look and act disabled */
+button:disabled, input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: auto; /* Allow clicks to trigger disabled state feedback */
+}
+
+/* Fix modal and overlay interactions */
+.modal, .ovl, .screen {
+  pointer-events: auto;
+}
+
+.modal.off, .ovl.off, .screen.off {
+  pointer-events: none;
+}
+
+/* Ensure buttons inside modals are always clickable */
+.modal button, .modal input, .modal a {
+  pointer-events: auto !important;
+}
+
+/* Flex-based button centers properly on mobile */
+button, input[type="button"], input[type="submit"], [role="button"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
