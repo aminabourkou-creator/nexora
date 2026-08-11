@@ -7,7 +7,7 @@
       by default. This is the only file that touches `window`.
    ============================================================ */
 
-import { auth, persistenceReady } from './firebase.js';
+import { auth } from './firebase.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 
 import { $ } from './utils.js';
@@ -25,15 +25,10 @@ import {
 import { sendMsg } from './chat.js';
 import { toggleVoice, toggleMic, leaveVoice } from './voice.js';
 
-// ── Auth state routing — الحفاظ على الجلسة عند إعادة الدخول ──
-let authChecked = false;
+// ── Auth state routing (same logic as the original single file) ──
 onAuthStateChanged(auth, async u => {
-  authChecked = true;
-  
-  // إذا كان هناك user محفوظ (جلسة قديمة)
   if (u) {
     state.user = u;
-    state.explicitLogout = false; // تعيين الفلاق لـ false (جلسة نشطة)
     renderUser(u);
     if (state.invCode && state.invRoomId) {
       show('join');
@@ -43,7 +38,6 @@ onAuthStateChanged(auth, async u => {
       await loadRooms();
     }
   } else {
-    // لا توجد جلسة نشطة
     state.user = null;
     if (state.invCode) show('join');
     else if (!$('splash').classList.contains('off')) { /* stay on splash */ }
