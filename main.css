@@ -489,3 +489,34 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
 .ph-panel h3{font-size:15px;font-weight:700;color:#fff;}
 .ph-panel p{font-size:13px;text-align:center;}
 
+/* ── FRIENDS SYSTEM ── */
+.tab-btn{background:none;border:none;padding:8px 12px;color:var(--muted);font-size:13px;
+  cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-weight:500;}
+.tab-btn.on{color:var(--primary);border-bottom-color:var(--primary);}
+.tab-btn:hover{color:var(--text);}
+
+.friend-item{display:flex;align-items:center;gap:11px;padding:11px;background:rgba(255,255,255,.03);
+  border-radius:8px;margin-bottom:8px;border:1px solid rgba(255,255,255,.05);}
+.friend-item .av{width:36px;height:36px;flex-shrink:0;border-radius:50%;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#000;}
+.friend-info{flex:1;}
+.friend-info strong{display:block;font-size:12px;margin-bottom:2px;}
+.friend-info small{color:var(--muted);font-size:11px;}
+.friend-actions{display:flex;gap:6px;}
+.btn-friend-sm{background:var(--primary);border:none;color:#000;padding:5px 10px;border-radius:6px;
+  font-size:11px;cursor:pointer;font-weight:600;transition:opacity .2s;}
+.btn-friend-sm:hover{opacity:.85;}
+.btn-friend-sm.reject{background:#ef4444;}
+.btn-friend-sm.reject:hover{opacity:.85;}
+
+.search-result{display:flex;align-items:center;justify-content:space-between;padding:12px;
+  background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:8px;border:1px solid rgba(255,255,255,.05);}
+.search-result .info{flex:1;}
+.search-result .info strong{display:block;font-size:12px;margin-bottom:2px;}
+.search-result .info small{color:var(--muted);font-size:11px;}
+.search-result .btn-add{background:var(--secondary);border:none;color:#fff;padding:6px 12px;
+  border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;transition:opacity .2s;}
+.search-result .btn-add:hover{opacity:.85;}
+.search-result .btn-add.pending{background:var(--muted);cursor:not-allowed;}
+
+

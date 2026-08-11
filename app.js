@@ -24,12 +24,19 @@ import {
 } from './rooms.js';
 import { sendMsg } from './chat.js';
 import { toggleVoice, toggleMic, leaveVoice } from './voice.js';
+import { 
+  subscribeFriends, subscribeFriendRequests, searchFriends, 
+  sendFriendRequest, acceptFriendRequest, rejectFriendRequest, 
+  removeFriend, switchFriendsTab, cleanupFriends 
+} from './friends.js';
 
 // ── Auth state routing (same logic as the original single file) ──
 onAuthStateChanged(auth, async u => {
   if (u) {
     state.user = u;
     renderUser(u);
+    subscribeFriends();
+    subscribeFriendRequests();
     if (state.invCode && state.invRoomId) {
       show('join');
       await checkInvite();
@@ -39,6 +46,7 @@ onAuthStateChanged(auth, async u => {
     }
   } else {
     state.user = null;
+    cleanupFriends();
     if (state.invCode) show('join');
     else if (!$('splash').classList.contains('off')) { /* stay on splash */ }
     else show('auth');
@@ -86,6 +94,13 @@ window.sendMsg = sendMsg;
 window.toggleVoice = toggleVoice;
 window.toggleMic = toggleMic;
 window.leaveVoice = leaveVoice;
+
+window.searchFriends = searchFriends;
+window.sendFriendRequest = sendFriendRequest;
+window.acceptFriendRequest = acceptFriendRequest;
+window.rejectFriendRequest = rejectFriendRequest;
+window.removeFriend = removeFriend;
+window.switchFriendsTab = switchFriendsTab;
 
 // ── Animated background particles ──
 const cv = $('bg'), cx = cv.getContext('2d');
