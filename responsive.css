@@ -15,28 +15,19 @@
   :root{--sb-width:100%;}
   .sidebar{position:fixed;transform:translateX(-100%);height:100vh;z-index:30;width:240px!important;}
   .sidebar.open{transform:translateX(0);}
-  /* FIX: Overlay must not block clicks when closed */
-  .sb-overlay{display:block;pointer-events:none;}
-  .sidebar.open ~ .sb-overlay{pointer-events:auto;}
+  .sb-overlay{display:block;}
   .btn-menu{display:flex;}
   .tb-name{display:none;}
   .rsb{position:fixed;transform:translateX(-100%);z-index:31;width:220px!important;}
   .rsb.open{transform:translateX(0);}
-  .rsbOverlay{display:block;pointer-events:none;}
-  .rsb.open ~ .rsbOverlay{pointer-events:auto;}
+  .sb-overlay{z-index:30;}
   .stats{grid-template-columns:repeat(2,1fr);}
   .hero-inner{flex-direction:column;}
   .hero-inner svg{display:none;}
   .auth-card{padding:22px 18px;}
-  /* Ensure all interactive elements are touchable */
-  button{min-height:44px;min-width:44px;}
-  input[type="button"],input[type="submit"]{min-height:44px;}
 }
 @media(max-width:400px){
   .stats{grid-template-columns:1fr 1fr;}
   .rtabs{padding:0 8px;}
   .rtab{padding:10px 10px;font-size:12px;}
-  /* Ensure buttons are touch-friendly on small phones */
-  .btn-glow,.btn-main,.btn-google,.tab{min-height:44px;}
-  .ib{min-height:44px;min-width:44px;}
 }

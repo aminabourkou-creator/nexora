@@ -18,11 +18,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
 button,input,textarea{font-family:inherit;}
 input[type="text"],input[type="email"],input[type="password"]{-webkit-appearance:none;appearance:none;}
-/* Mobile-friendly touch targets */
-button,[role="button"],input[type="button"],input[type="submit"]{
-  touch-action:manipulation;-webkit-user-select:none;user-select:none;
-  position:relative;z-index:auto;pointer-events:auto;
-}
 canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
 
 /* ── SCREENS ── */
@@ -110,8 +105,8 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
   border-right:1px solid var(--border);display:flex;flex-direction:column;
   flex-shrink:0;transition:width .28s ease,transform .28s ease;overflow:hidden;z-index:30;}
 .sidebar.slim{width:64px;}
-/* Mobile sidebar overlay - MUST NOT BLOCK CLICKS when closed */
-.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:29;pointer-events:none;}
+/* Mobile sidebar overlay */
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:29;}
 .sb-brand{padding:16px 13px;display:flex;align-items:center;gap:11px;
   border-bottom:1px solid var(--border);cursor:pointer;overflow:hidden;flex-shrink:0;}
 .sb-brand .logo-box{width:34px;height:34px;border-radius:9px;flex-shrink:0;}
