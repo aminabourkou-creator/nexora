@@ -360,6 +360,10 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
 .bmic.off{background:rgba(239,68,68,.14);color:#f87171;border:1px solid rgba(239,68,68,.28);}
 .blv{padding:6px 13px;border-radius:8px;border:1px solid rgba(239,68,68,.28);
   background:rgba(239,68,68,.09);color:#fca5a5;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto;}
+.vparts{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.vchip{font-size:11px;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);color:#D8D2C4;white-space:nowrap;}
+.ib.gh.vlive{background:rgba(34,197,94,.16);color:#4ade80;box-shadow:0 0 0 1px rgba(34,197,94,.3);}
 
 /* CHAT */
 .chat-area{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:3px;-webkit-overflow-scrolling:touch;}
@@ -669,7 +673,7 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       <button class="btn-menu" onclick="openRsb()">☰</button>
       <div class="srch" style="max-width:360px"><span class="si">🔍</span><input placeholder="Search in room..."/></div>
       <div class="tbr">
-        <button class="ib gh" onclick="toggleVoice()" title="Voice Chat">🎙️</button>
+        <button class="ib gh" id="voiceToggleBtn" onclick="toggleVoice()" title="Voice Chat">🎙️</button>
         <button class="ib gh" onclick="toast('Coming soon!','inf')">📊</button>
         <div class="av" id="rvAv" style="width:32px;height:32px;font-size:11px"></div>
       </div>
@@ -683,8 +687,10 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
     </div>
     <div class="vbar" id="vBar">
       <div class="vstatus"><div class="vdot"></div>Voice Active</div>
+      <div class="vparts" id="vParts"></div>
       <button class="bmic on" id="micBtn" onclick="toggleMic()">🎙️ Mute</button>
       <button class="blv" onclick="leaveVoice()">Leave Voice</button>
+      <div id="voiceAudios" style="display:none"></div>
     </div>
     <div id="p-chat" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
       <div class="chat-area" id="chatArea"></div>
@@ -988,6 +994,8 @@ window.addEventListener('error',function(e){
 let user=null,room=null,rooms=[],chatUnsub=null,memUnsub=null;
 let curEmoji='🤖',invUrl='',invCode=null,invRoomId=null;
 let voiceOn=false,micMuted=false,localStream=null,authTab='in';
+var ICE_SERVERS=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302']}];
+var voicePeers={},voiceSigUnsubs={},voicePresenceUnsub=null,voiceParticipants={};
 let userProfile={name:'',username:'',bio:'',photoData:''};
 let pendingAvatarData=null;
 const OWNER_EMAIL='aminabenzaram@gmail.com';
@@ -2129,16 +2137,126 @@ function renderTasksPanel(){
 }
 
 
+// ── VOICE CHAT (WebRTC mesh, Firestore-signaled) ──
 function toggleVoice(){
   if(voiceOn){leaveVoice();return;}
+  if(!room){toast('Open a room first','err');return;}
   navigator.mediaDevices.getUserMedia({audio:true,video:false})
     .then(function(stream){
       localStream=stream;voiceOn=true;
       $('vBar').classList.add('show');
       $('micBtn').className='bmic on';$('micBtn').textContent='🎙️ Mute';
+      var btn=$('voiceToggleBtn');if(btn)btn.classList.add('vlive');
+      return db.collection('rooms').doc(room.id).collection('voice').doc(user.uid).set({
+        uid:user.uid,name:userProfile.name||user.email,email:user.email,
+        joinedAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }).then(function(){
+      subscribeVoicePresence(room.id);
       toast('Voice chat started','ok');
-    }).catch(function(){toast('Microphone access denied','err');});
+    }).catch(function(e){
+      voiceOn=false;$('vBar').classList.remove('show');
+      var btn=$('voiceToggleBtn');if(btn)btn.classList.remove('vlive');
+      toast(e&&e.name==='NotAllowedError'?'Microphone access denied':'Could not start voice chat','err');
+    });
 }
+
+function subscribeVoicePresence(rid){
+  if(voicePresenceUnsub)voicePresenceUnsub();
+  voicePresenceUnsub=db.collection('rooms').doc(rid).collection('voice')
+    .onSnapshot(function(snap){
+      var present={};
+      snap.forEach(function(d){present[d.id]=d.data();});
+      voiceParticipants=present;
+      renderVoiceParticipants();
+      Object.keys(present).forEach(function(uid){
+        if(uid===user.uid||voicePeers[uid])return;
+        connectToPeer(uid,rid);
+      });
+      Object.keys(voicePeers).forEach(function(uid){
+        if(!present[uid])disconnectPeer(uid,rid,false);
+      });
+    });
+}
+
+function renderVoiceParticipants(){
+  var el=$('vParts');if(!el)return;
+  el.innerHTML=Object.keys(voiceParticipants).map(function(uid){
+    var p=voiceParticipants[uid];
+    return '<span class="vchip">🎙️ '+escHtml(p.name||p.email||'User')+'</span>';
+  }).join('');
+}
+
+function vPairId(a,b){return a<b?a+'_'+b:b+'_'+a;}
+
+function connectToPeer(peerUid,rid){
+  var pc=new RTCPeerConnection({iceServers:ICE_SERVERS});
+  voicePeers[peerUid]=pc;
+  if(localStream)localStream.getTracks().forEach(function(t){pc.addTrack(t,localStream);});
+  pc.ontrack=function(ev){
+    var aId='va_'+peerUid,a=document.getElementById(aId);
+    if(!a){a=document.createElement('audio');a.id=aId;a.autoplay=true;a.playsInline=true;$('voiceAudios').appendChild(a);}
+    a.srcObject=ev.streams[0];
+  };
+  var pid=vPairId(user.uid,peerUid);
+  var sigRef=db.collection('rooms').doc(rid).collection('voiceSignals').doc(pid);
+  var isCaller=user.uid<peerUid;
+  var myCands=sigRef.collection(isCaller?'candidatesA':'candidatesB');
+  var theirCands=sigRef.collection(isCaller?'candidatesB':'candidatesA');
+  var unsubs=[];
+  pc.onicecandidate=function(ev){if(ev.candidate)myCands.add(ev.candidate.toJSON()).catch(function(){});};
+  if(isCaller){
+    pc.createOffer().then(function(offer){
+      return pc.setLocalDescription(offer).then(function(){
+        return sigRef.set({offer:{type:offer.type,sdp:offer.sdp}},{merge:true});
+      });
+    }).catch(function(){});
+    unsubs.push(sigRef.onSnapshot(function(snap){
+      var d=snap.data();
+      if(d&&d.answer&&!pc.currentRemoteDescription){
+        pc.setRemoteDescription(new RTCSessionDescription(d.answer)).catch(function(){});
+      }
+    }));
+  }else{
+    unsubs.push(sigRef.onSnapshot(function(snap){
+      var d=snap.data();
+      if(d&&d.offer&&!pc.currentRemoteDescription){
+        pc.setRemoteDescription(new RTCSessionDescription(d.offer)).then(function(){
+          return pc.createAnswer();
+        }).then(function(answer){
+          return pc.setLocalDescription(answer).then(function(){
+            return sigRef.set({answer:{type:answer.type,sdp:answer.sdp}},{merge:true});
+          });
+        }).catch(function(){});
+      }
+    }));
+  }
+  unsubs.push(theirCands.onSnapshot(function(snap){
+    snap.docChanges().forEach(function(ch){
+      if(ch.type==='added')pc.addIceCandidate(new RTCIceCandidate(ch.doc.data())).catch(function(){});
+    });
+  }));
+  voiceSigUnsubs[peerUid]=unsubs;
+}
+
+function disconnectPeer(peerUid,rid,cleanupDocs){
+  var pc=voicePeers[peerUid];
+  if(pc){pc.close();delete voicePeers[peerUid];}
+  var a=document.getElementById('va_'+peerUid);if(a){a.srcObject=null;a.remove();}
+  (voiceSigUnsubs[peerUid]||[]).forEach(function(u){try{u();}catch(e){}});
+  delete voiceSigUnsubs[peerUid];
+  if(cleanupDocs&&rid){
+    var pid=vPairId(user.uid,peerUid);
+    var sigRef=db.collection('rooms').doc(rid).collection('voiceSignals').doc(pid);
+    ['candidatesA','candidatesB'].forEach(function(sub){
+      sigRef.collection(sub).get().then(function(snap){
+        snap.forEach(function(d){d.ref.delete().catch(function(){});});
+      }).catch(function(){});
+    });
+    sigRef.delete().catch(function(){});
+  }
+}
+
 function toggleMic(){
   if(!localStream)return;
   micMuted=!micMuted;
@@ -2147,11 +2265,25 @@ function toggleMic(){
   $('micBtn').textContent=micMuted?'🔇 Unmute':'🎙️ Mute';
   toast(micMuted?'Muted':'Unmuted','inf');
 }
+
 function leaveVoice(){
+  var rid=room?room.id:null;
+  Object.keys(voicePeers).forEach(function(uid){disconnectPeer(uid,rid,true);});
+  if(voicePresenceUnsub){voicePresenceUnsub();voicePresenceUnsub=null;}
+  if(rid&&user)db.collection('rooms').doc(rid).collection('voice').doc(user.uid).delete().catch(function(){});
   if(localStream)localStream.getTracks().forEach(function(t){t.stop();});
-  localStream=null;voiceOn=false;micMuted=false;
-  $('vBar').classList.remove('show');toast('Left voice','inf');
+  localStream=null;voiceOn=false;micMuted=false;voiceParticipants={};
+  $('vBar').classList.remove('show');
+  var vp=$('vParts');if(vp)vp.innerHTML='';
+  var btn=$('voiceToggleBtn');if(btn)btn.classList.remove('vlive');
+  toast('Left voice','inf');
 }
+
+window.addEventListener('beforeunload',function(){
+  if(voiceOn&&room&&user){
+    db.collection('rooms').doc(room.id).collection('voice').doc(user.uid).delete().catch(function(){});
+  }
+});
 
 // ── ROOM TABS ──
 function rTab(tab,el){
