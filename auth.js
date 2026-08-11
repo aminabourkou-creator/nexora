@@ -17,7 +17,6 @@ import { $ } from './utils.js';
 import { initials, errMsg } from './utils.js';
 import { alrt, calrt, show } from './ui.js';
 import { state } from './state.js';
-import { cleanupFriends } from './friends.js';
 
 export function renderUser(u) {
   const name = u.displayName || u.email.split('@')[0];
@@ -71,8 +70,7 @@ export async function forgotPw() {
 export async function doLogout() {
   if (state.chatUnsub) state.chatUnsub();
   if (state.memUnsub) state.memUnsub();
-  cleanupFriends();
-  state.explicitLogout = true; // تسجيل الخروج الصريح
+  state.explicitLogout = true; // تسجيل أن المستخدم خرج صراحة
   await signOut(auth);
   state.rooms = []; state.room = null;
   show('auth');

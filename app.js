@@ -1,16 +1,13 @@
 /* ============================================================
-   NEXORA STUDIO — app.js (IMPROVED)
+   NEXORA STUDIO — app.js  (entry point, loaded as type="module")
    1. Listens to Firebase auth state and routes to the right screen.
    2. Draws the animated background particle canvas.
    3. Exposes every function the HTML's onclick="..." attributes
       need onto `window`, since ES module functions are not global
       by default. This is the only file that touches `window`.
-   
-   IMPROVED: Added explicit logout check to prevent unwanted
-   auto-login after user explicitly logs out.
    ============================================================ */
 
-import { auth } from './firebase.js';
+import { auth, persistenceReady } from './firebase.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 
 import { $ } from './utils.js';
@@ -27,32 +24,17 @@ import {
 } from './rooms.js';
 import { sendMsg } from './chat.js';
 import { toggleVoice, toggleMic, leaveVoice } from './voice.js';
-import { 
-  subscribeFriends, subscribeFriendRequests, searchFriends, 
-  sendFriendRequest, acceptFriendRequest, rejectFriendRequest, 
-  removeFriend, switchFriendsTab, cleanupFriends 
-} from './friends.js';
 
-// ── Auth state routing with persistence support ──
+// ── Auth state routing — الحفاظ على الجلسة عند إعادة الدخول ──
 let authChecked = false;
 onAuthStateChanged(auth, async u => {
   authChecked = true;
   
-  // ✅ IMPROVED: Check if user explicitly logged out
-  // This prevents auto-login after user clicks "Logout" button
-  if (state.explicitLogout && !u) {
-    state.user = null;
-    cleanupFriends();
-    show('auth');
-    return;
-  }
-  
+  // إذا كان هناك user محفوظ (جلسة قديمة)
   if (u) {
     state.user = u;
-    state.explicitLogout = false; // Reset flag for new session
+    state.explicitLogout = false; // تعيين الفلاق لـ false (جلسة نشطة)
     renderUser(u);
-    subscribeFriends();
-    subscribeFriendRequests();
     if (state.invCode && state.invRoomId) {
       show('join');
       await checkInvite();
@@ -61,8 +43,8 @@ onAuthStateChanged(auth, async u => {
       await loadRooms();
     }
   } else {
+    // لا توجد جلسة نشطة
     state.user = null;
-    cleanupFriends();
     if (state.invCode) show('join');
     else if (!$('splash').classList.contains('off')) { /* stay on splash */ }
     else show('auth');
@@ -110,13 +92,6 @@ window.sendMsg = sendMsg;
 window.toggleVoice = toggleVoice;
 window.toggleMic = toggleMic;
 window.leaveVoice = leaveVoice;
-
-window.searchFriends = searchFriends;
-window.sendFriendRequest = sendFriendRequest;
-window.acceptFriendRequest = acceptFriendRequest;
-window.rejectFriendRequest = rejectFriendRequest;
-window.removeFriend = removeFriend;
-window.switchFriendsTab = switchFriendsTab;
 
 // ── Animated background particles ──
 const cv = $('bg'), cx = cv.getContext('2d');
