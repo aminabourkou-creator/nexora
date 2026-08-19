@@ -725,6 +725,10 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
       <div id="voiceAudios" style="display:none"></div>
     </div>
     <div id="p-chat" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid rgba(212,175,55,.1);">
+        <span id="roomTitle" style="font-size:13px;font-weight:600;color:#D4AF37;"></span>
+        <button onclick="clearRoomMessages()" style="padding:6px 10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">🗑️ Clear</button>
+      </div>
       <div class="chat-area" id="chatArea"></div>
       <div class="cinp-wrap">
         <div id="chatEmojiPop" class="egrid" style="display:none;position:absolute;bottom:64px;left:12px;right:12px;
@@ -1926,6 +1930,21 @@ function leaveRoom(){
   }).then(function(){
     toast('Left "'+rname+'"','ok');
     backDash();
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+
+function clearRoomMessages(){
+  if(!room||!user)return;
+  if(room.ownerId!==user.uid){toast('Only room owner can clear messages','err');return;}
+  if(!confirm('Delete all messages in this room? This cannot be undone!'))return;
+  var rid=room.id;
+  db.collection('rooms').doc(rid).collection('messages').get().then(function(snap){
+    var batch=db.batch();
+    snap.forEach(function(doc){batch.delete(doc.ref);});
+    return batch.commit();
+  }).then(function(){
+    $('chatArea').innerHTML='';
+    toast('All messages cleared','ok');
   }).catch(function(e){toast('Error: '+e.message,'err');});
 }
 
