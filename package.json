@@ -12,25 +12,14 @@
     "deploy": "vercel",
     "deploy:prod": "vercel --prod",
     "firebase:rules": "firebase deploy --only firestore:rules",
-    "firebase:login": "firebase login",
-    "firebase:init": "firebase init",
-    "test:lighthouse": "lighthouse https://nexora-studio.vercel.app --view",
-    "check:pwa": "npm run test:lighthouse"
+    "test:lighthouse": "lighthouse https://nexora-pi-hazel.vercel.app --view"
   },
   "devDependencies": {
     "firebase-tools": "^13.0.0",
     "vercel": "^latest",
     "http-server": "^14.1.1"
   },
-  "keywords": [
-    "chat",
-    "collaboration",
-    "voice",
-    "ai",
-    "pwa",
-    "firebase",
-    "webrtc"
-  ],
+  "keywords": ["chat", "collaboration", "voice", "ai", "pwa", "firebase", "webrtc"],
   "repository": {
     "type": "git",
     "url": "https://github.com/aminabourkou-creator/nexora.git"
